@@ -282,7 +282,7 @@ func main() {
 	}
 
 	//Usage msg
-	usage_msg = "Usage: <index> <request>"
+	usage_msg = "Usage: <cmd> <request>"
 
 	start_time := time.Now().Format("10:00:00")
 	prog_name := "gowebgo"
