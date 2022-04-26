@@ -12,6 +12,7 @@ import (
     "net/http"
 	"net/http/httputil"
 	"strings"
+	"strconv"
     "log"
 	"time"
 	"bufio"
@@ -24,16 +25,22 @@ type Connection struct {
     Response *http.Response
 }
 
+type RStruct struct {
+	filename string
+	host string
+	data bool
+}
+
 var port int
 var editor string
 var v_offset int
-var req_files []string
+var reqs []RStruct
 
 //OS commands
 var os_cmds map[string] string
 var options [5]string
 var usage_msg string
-var cmd_funcs map[string] func(string)
+var cmd_funcs []func(string)
 
 // Probably not needed 
 func format_request(r *http.Request) string {
@@ -85,6 +92,8 @@ func ReadHTTPFromFile(r io.Reader) ([]Connection, error) {
     return stream, nil
 }
 
+// CMD funcs 
+
 func edit_request(filename string) {
 	cmd := exec.Command(editor, "requests/" + filename)
 	cmd.Stdin = os.Stdin
@@ -93,11 +102,10 @@ func edit_request(filename string) {
 	if err != nil {
 		fmt.Println(err)
 	}
-//	println(cmd.Output())
 }
 
 func delete_request(filename string) {
-	cmd := exec.Command(remove_cmd, "requests/" + filename)
+	cmd := exec.Command(os_cmds["remove"], "requests/" + filename)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	err := cmd.Run()
@@ -106,18 +114,32 @@ func delete_request(filename string) {
 	}
 }
 
+func rename_request(filename string) {
+	fmt.Println(filename)
+}
+
+func send_request(filename string) {
+	fmt.Println(filename)
+}
+
+func exit_prog(filename string) {
+	os.Exit(0)
+}
+
 func handle_request(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, "Hello, %q", html.EscapeString(req.URL.Path))
 	req_dump, err := httputil.DumpRequest(req, true)
 	if err != nil {
 		fmt.Println(err)
 	}
-	req_file := fmt.Sprintf("req_%v", len(req_files))
-	err = ioutil.WriteFile("requests/" + req_file, req_dump, 0777)
+	req_filename := fmt.Sprintf("req_%v", len(reqs))
+	err = ioutil.WriteFile("requests/" + req_filename, req_dump, 0777)
 	if err != nil {
 		fmt.Println(err)
 	} else {
-		req_files = append(req_files, req_file)
+		req_host := req.Host
+		n_rs := RStruct{filename: req_filename, host: req_host}
+		reqs = append(reqs, n_rs)
 	}
 	display()
 	reader := bufio.NewReader(os.Stdin)
@@ -135,24 +157,33 @@ func get_n_byte_string(c byte, n int) string {
 
 func read_cmd(cmd string) {
 	split := strings.Split(cmd, " ")
-	if len(split) < 2 {
+	if len(split) == 0 {
 		log.Print("\nError: fewer args than expected.")
 	} else {
-		cmd := split[0]
-		arg := split[1]
-		if cmd == "e" {
-			cmd_funcs[cmd](arg)
+		cmd_index, err := strconv.Atoi(split[0])
+		if err != nil {
+			log.Println("\nPlease specify an integer")
+		} else {
+			arg := ""
+			if len(split) > 1 {
+				arg = split[1]
+			}
+			if cmd_index < 0 || cmd_index > len(cmd_funcs) {
+				log.Println("\nCmd index out of range.")
+			} else {
+				cmd_funcs[cmd_index](arg)
+			}
 		}
 	}
 }
 
 func display(){
 
-	req_num := len(req_files)
+	req_num := len(reqs)
 	req_v_dist := 0
 
 	//Clear screen
-	cmd := exec.Command(os_cmd["clear"])
+	cmd := exec.Command(os_cmds["clear"])
 	cmd.Stdout = os.Stdout
 	err := cmd.Run()
 	if err != nil {
@@ -160,8 +191,8 @@ func display(){
 	}
 
 	// Print latest request 
-	if len(req_files) > 0 {
-		last_req_file := fmt.Sprintf("requests/%v", req_files[req_num-1])
+	if len(reqs) > 0 {
+		last_req_file := fmt.Sprintf("requests/%v", reqs[req_num-1].filename)
 		data, err := ioutil.ReadFile(last_req_file)
 		if err != nil {
 			log.Fatal(err)
@@ -174,9 +205,10 @@ func display(){
 	fmt.Println(get_n_byte_string('-', 50))
 
 	// Print previous requests
-	fmt.Println("\nPrevious requests:\n")
+	fmt.Println("\nName\t\tHost\t\tData\n")
 	for i := 0; i < req_v_dist; i++ {
-		fmt.Println(req_files[req_num - i - 1])
+		r := reqs[req_num - i - 1]
+		fmt.Println(r.filename + "\t\t" + r.host + "\t\t" + strconv.FormatBool(r.data))
 	}
 	for i := 0; i < v_offset - req_v_dist; i++ {
 		fmt.Println()
@@ -204,7 +236,8 @@ func flag_init() {
 func main() {
 	// Initialise global variables 
 	v_offset = 17
-	cmd_funcs = make(map[string] func(string))
+	cmd_funcs = []func(string){edit_request, rename_request, send_request, delete_request, exit_prog}
+
 	os_cmds = make(map[string] string)
 	edit_request("req_0")
 
@@ -213,12 +246,14 @@ func main() {
 	os := runtime.GOOS
 	if os == "Windows" {
 		os_cmds["clear"] = "cls"
+		os_cmds["remove"] = "del"
 	} else {
 		os_cmds["clear"] = "clear"
+		os_cmds["remove"] = "rm"
 	}
 
 	//Usage msg
-	usage_msg = "Usage: <cmd> <req num>"
+	usage_msg = "Usage: <index> <request>"
 
 	//Set options 
 	options[0] = "Edit"
@@ -226,9 +261,6 @@ func main() {
 	options[2] = "Send"
 	options[3] = "Delete"
 	options[4] = "Exit"
-
-	//Set cmd functions
-	cmd_funcs["e"] = edit_request
 
 	start_time := time.Now().Format("10:00:00")
 	prog_name := "gowebgo"
@@ -242,10 +274,6 @@ func main() {
 
 	display()
     http.HandleFunc("/", handle_request)
-
-    http.HandleFunc("/hi", func(w http.ResponseWriter, r *http.Request){
-        fmt.Fprintf(w, "Hi")
-    })
 
     log.Fatal(http.ListenAndServe(":8081", nil))
 }
