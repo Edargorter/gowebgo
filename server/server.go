@@ -6,6 +6,7 @@ import (
 	"os/exec"
 	"flag"
     "fmt"
+	"golang.org/x/term"
     "html"
 	"io"
 	"io/ioutil"
@@ -19,6 +20,11 @@ import (
 	"bytes"
 	"runtime"
 )
+
+type CStruct struct {
+	display string
+	function func([]string)
+}
 
 type Connection struct {
     Request  *http.Request
@@ -35,12 +41,12 @@ var port int
 var editor string
 var v_offset int
 var reqs []RStruct
+var intercept bool
 
 //OS commands
 var os_cmds map[string] string
-var options [5]string
 var usage_msg string
-var cmd_funcs []func(string)
+var cmd_dict map[string] CStruct
 
 // Probably not needed 
 func format_request(r *http.Request) string {
@@ -94,8 +100,8 @@ func ReadHTTPFromFile(r io.Reader) ([]Connection, error) {
 
 // CMD funcs 
 
-func edit_request(filename string) {
-	cmd := exec.Command(editor, "requests/" + filename)
+func edit_request(args []string) {
+	cmd := exec.Command(editor, "requests/" + args[0])
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	err := cmd.Run()
@@ -104,25 +110,23 @@ func edit_request(filename string) {
 	}
 }
 
-func delete_request(filename string) {
-	cmd := exec.Command(os_cmds["remove"], "requests/" + filename)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
+func delete_request(args []string) {
+	cmd := exec.Command(os_cmds["remove"], "requests/" + args[0])
 	err := cmd.Run()
 	if err != nil {
 		fmt.Println(err)
 	}
 }
 
-func rename_request(filename string) {
-	fmt.Println(filename)
+func rename_request(args []string) {
+	fmt.Println(args[0])
 }
 
-func send_request(filename string) {
-	fmt.Println(filename)
+func send_request(args []string) {
+	fmt.Println(args[0])
 }
 
-func exit_prog(filename string) {
+func quit(args []string) {
 	os.Exit(0)
 }
 
@@ -144,7 +148,8 @@ func handle_request(w http.ResponseWriter, req *http.Request) {
 	display()
 	reader := bufio.NewReader(os.Stdin)
 	user_inp, _ := reader.ReadString('\n')
-	read_cmd(user_inp)
+	proc_cmd(user_inp)
+	display()
 }
 
 func get_n_byte_string(c byte, n int) string {
@@ -155,40 +160,53 @@ func get_n_byte_string(c byte, n int) string {
 	return nbs.String()
 }
 
-func read_cmd(cmd string) {
-	split := strings.Split(cmd, " ")
+func proc_cmd(cmd string) {
+	split := strings.Split(strings.TrimSuffix(cmd, "\n"), " ")
 	if len(split) == 0 {
 		log.Print("\nError: fewer args than expected.")
 	} else {
-		cmd_index, err := strconv.Atoi(split[0])
-		if err != nil {
-			log.Println("\nPlease specify an integer")
+		cmd_letter := split[0]
+		var args []string
+		if len(split) > 1 {
+			args = split[1:]
+		}
+		if cstruct, ok := cmd_dict[cmd_letter]; ok {
+			cstruct.function(args)
 		} else {
-			arg := ""
-			if len(split) > 1 {
-				arg = split[1]
-			}
-			if cmd_index < 0 || cmd_index > len(cmd_funcs) {
-				log.Println("\nCmd index out of range.")
-			} else {
-				cmd_funcs[cmd_index](arg)
-			}
+			log.Println("\nInvalid command.")
 		}
 	}
 }
 
-func display(){
-
-	req_num := len(reqs)
-	req_v_dist := 0
-
-	//Clear screen
+//Clear screen
+func cls() {
 	cmd := exec.Command(os_cmds["clear"])
 	cmd.Stdout = os.Stdout
 	err := cmd.Run()
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func display() {
+
+	//Get terminal dimensions 
+	win_width := 75
+	win_height := 200
+	if term.IsTerminal(0) {
+		width, height, err := term.GetSize(0)
+		if err != nil {
+			//log.Printf("Using default width %v\n", win_width)
+		} else {
+			win_width = width
+			win_height = height
+		}
+	}
+
+	req_num := len(reqs) + win_height - win_height
+	req_v_dist := 0
+
+	cls()
 
 	// Print latest request 
 	if len(reqs) > 0 {
@@ -197,12 +215,14 @@ func display(){
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Println("\nRequest:\n")
+		fmt.Printf("\n%s\n\n", reqs[req_num-1].filename)
 		fmt.Print(string(data))
 		req_v_dist = int(math.Min(math.Abs(float64(req_num - v_offset)), float64(v_offset)))
 		req_v_dist = int(math.Min(float64(req_num), float64(v_offset)))
 	}
-	fmt.Println(get_n_byte_string('-', 50))
+
+	//Separator 
+	fmt.Println(get_n_byte_string('-', win_width))
 
 	// Print previous requests
 	fmt.Println("\nName\t\tHost\t\t\tData\n")
@@ -214,14 +234,15 @@ func display(){
 		fmt.Println()
 	}
 
-	fmt.Println("\n" + get_n_byte_string('-', 50) + "\n")
+	//Separator 
+	fmt.Println("\n" + get_n_byte_string('-', win_width) + "\n")
 
 	//Display options 
 	fmt.Println(usage_msg + "\n")
-	for index, opt := range options {
-		fmt.Println(fmt.Sprintf("%v) %s", index, opt))
+	for cmd_letter, cstruct := range cmd_dict {
+		fmt.Print(fmt.Sprintf("%s (%v) ", cstruct.display, cmd_letter))
 	}
-	fmt.Print("> ")
+	fmt.Print("\n> ")
 }
 
 func flag_init() {
@@ -235,12 +256,20 @@ func flag_init() {
 
 func main() {
 	// Initialise global variables 
+	intercept = false
 	v_offset = 17
-	cmd_funcs = []func(string){edit_request, rename_request, send_request, delete_request, exit_prog}
+
+	//Cmd struct dict
+
+	cmd_dict = make(map[string] CStruct)
+	cmd_dict["e"] = CStruct{display: "Edit", function: edit_request}
+	cmd_dict["r"] = CStruct{display: "Rename", function: rename_request}
+	cmd_dict["s"] = CStruct{display: "Send", function: send_request}
+	cmd_dict["d"] = CStruct{display: "Delete", function: delete_request}
+	cmd_dict["q"] = CStruct{display: "Quit", function: quit}
+
 
 	os_cmds = make(map[string] string)
-	edit_request("req_0")
-
 
 	//Detect OS and set commands 
 	os := runtime.GOOS
@@ -254,13 +283,6 @@ func main() {
 
 	//Usage msg
 	usage_msg = "Usage: <index> <request>"
-
-	//Set options 
-	options[0] = "Edit"
-	options[1] = "Rename"
-	options[2] = "Send"
-	options[3] = "Delete"
-	options[4] = "Exit"
 
 	start_time := time.Now().Format("10:00:00")
 	prog_name := "gowebgo"
