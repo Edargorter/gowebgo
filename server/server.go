@@ -28,7 +28,9 @@ var port int
 var editor string
 var v_offset int
 var req_files []string
-var clear_cmd string
+
+//OS commands
+var os_cmds map[string] string
 var options [5]string
 var usage_msg string
 var cmd_funcs map[string] func(string)
@@ -84,12 +86,24 @@ func ReadHTTPFromFile(r io.Reader) ([]Connection, error) {
 }
 
 func edit_request(filename string) {
-	cmd := exec.Command(editor, "test.txt")
+	cmd := exec.Command(editor, "requests/" + filename)
 	cmd.Stdin = os.Stdin
 	cmd.Stdout = os.Stdout
 	err := cmd.Run()
-	fmt.Println(err)
+	if err != nil {
+		fmt.Println(err)
+	}
 //	println(cmd.Output())
+}
+
+func delete_request(filename string) {
+	cmd := exec.Command(remove_cmd, "requests/" + filename)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	err := cmd.Run()
+	if err != nil {
+		fmt.Println(err)
+	}
 }
 
 func handle_request(w http.ResponseWriter, req *http.Request) {
@@ -124,7 +138,11 @@ func read_cmd(cmd string) {
 	if len(split) < 2 {
 		log.Print("\nError: fewer args than expected.")
 	} else {
-		fmt.Println(split[0], split[1])
+		cmd := split[0]
+		arg := split[1]
+		if cmd == "e" {
+			cmd_funcs[cmd](arg)
+		}
 	}
 }
 
@@ -134,7 +152,7 @@ func display(){
 	req_v_dist := 0
 
 	//Clear screen
-	cmd := exec.Command(clear_cmd)
+	cmd := exec.Command(os_cmd["clear"])
 	cmd.Stdout = os.Stdout
 	err := cmd.Run()
 	if err != nil {
@@ -186,13 +204,17 @@ func flag_init() {
 func main() {
 	// Initialise global variables 
 	v_offset = 17
+	cmd_funcs = make(map[string] func(string))
+	os_cmds = make(map[string] string)
+	edit_request("req_0")
+
 
 	//Detect OS and set commands 
 	os := runtime.GOOS
 	if os == "Windows" {
-		clear_cmd = "cls"
+		os_cmds["clear"] = "cls"
 	} else {
-		clear_cmd = "clear"
+		os_cmds["clear"] = "clear"
 	}
 
 	//Usage msg
@@ -206,7 +228,6 @@ func main() {
 	options[4] = "Exit"
 
 	//Set cmd functions
-	cmd_funcs = make(map[string] func(string))
 	cmd_funcs["e"] = edit_request
 
 	start_time := time.Now().Format("10:00:00")
