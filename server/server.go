@@ -205,7 +205,7 @@ func display(){
 	fmt.Println(get_n_byte_string('-', 50))
 
 	// Print previous requests
-	fmt.Println("\nName\t\tHost\t\tData\n")
+	fmt.Println("\nName\t\tHost\t\t\tData\n")
 	for i := 0; i < req_v_dist; i++ {
 		r := reqs[req_num - i - 1]
 		fmt.Println(r.filename + "\t\t" + r.host + "\t\t" + strconv.FormatBool(r.data))
