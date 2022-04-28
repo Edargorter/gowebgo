@@ -46,6 +46,7 @@ var intercept bool
 //OS commands
 var os_cmds map[string] string
 var usage_msg string
+var cmd_arr []string 
 var cmd_dict map[string] CStruct
 
 // Probably not needed 
@@ -239,8 +240,8 @@ func display() {
 
 	//Display options 
 	fmt.Println(usage_msg + "\n")
-	for cmd_letter, cstruct := range cmd_dict {
-		fmt.Print(fmt.Sprintf("%s (%v) ", cstruct.display, cmd_letter))
+	for _, cmd_letter := range cmd_arr {
+		fmt.Print(fmt.Sprintf("%s (%v) ", cmd_dict[cmd_letter].display, cmd_letter))
 	}
 	fmt.Print("\n> ")
 }
@@ -259,8 +260,10 @@ func main() {
 	intercept = false
 	v_offset = 17
 
-	//Cmd struct dict
+	//Cmd array
+	cmd_arr = []string{"e", "r", "s", "d", "q"}
 
+	//Cmd struct dict
 	cmd_dict = make(map[string] CStruct)
 	cmd_dict["e"] = CStruct{display: "Edit", function: edit_request}
 	cmd_dict["r"] = CStruct{display: "Rename", function: rename_request}
