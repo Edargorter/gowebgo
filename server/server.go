@@ -5,7 +5,7 @@ import (
 	"math"
 	"os/exec"
 	"flag"
-    "fmt"
+	"fmt"
 	"golang.org/x/term"
     "html"
 	"io"
@@ -32,7 +32,8 @@ type Connection struct {
 }
 
 type RStruct struct {
-	filename string
+	req_filename string
+	resp_filename string
 	host string
 	data bool
 }
@@ -143,7 +144,7 @@ func handle_request(w http.ResponseWriter, req *http.Request) {
 		fmt.Println(err)
 	} else {
 		req_host := req.Host
-		n_rs := RStruct{filename: req_filename, host: req_host}
+		n_rs := RStruct{req_filename: req_filename, host: req_host}
 		reqs = append(reqs, n_rs)
 	}
 	display()
@@ -211,12 +212,12 @@ func display() {
 
 	// Print latest request 
 	if len(reqs) > 0 {
-		last_req_file := fmt.Sprintf("requests/%v", reqs[req_num-1].filename)
+		last_req_file := fmt.Sprintf("requests/%v", reqs[req_num-1].req_filename)
 		data, err := ioutil.ReadFile(last_req_file)
 		if err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("\n%s\n\n", reqs[req_num-1].filename)
+		fmt.Printf("\n%s\n\n", reqs[req_num-1].req_filename)
 		fmt.Print(string(data))
 		req_v_dist = int(math.Min(math.Abs(float64(req_num - v_offset)), float64(v_offset)))
 		req_v_dist = int(math.Min(float64(req_num), float64(v_offset)))
@@ -226,10 +227,10 @@ func display() {
 	fmt.Println(get_n_byte_string('-', win_width))
 
 	// Print previous requests
-	fmt.Println("\nName\t\tHost\t\t\tData\n")
+	fmt.Println("\nName\t\tHost\t\t\tResp\t\tCode\n")
 	for i := 0; i < req_v_dist; i++ {
 		r := reqs[req_num - i - 1]
-		fmt.Println(r.filename + "\t\t" + r.host + "\t\t" + strconv.FormatBool(r.data))
+		fmt.Println(r.req_filename + "\t\t" + r.host + "\t\t" + strconv.FormatBool(r.data))
 	}
 	for i := 0; i < v_offset - req_v_dist; i++ {
 		fmt.Println()
