@@ -3,7 +3,16 @@
 pre="[Gowebgo]"
 
 echo -en "$pre Checking for go...\n"
-cat title.txt
+
+echo -en "
+  ______       _  _  _       _      ______       
+ / _____)     | || || |     | |    / _____)      
+| /  ___  ___ | || || | ____| | _ | /  ___  ___  
+| | (___)/ _ \| ||_|| |/ _  ) || \| | (___)/ _ \ 
+| \____/| |_| | |___| ( (/ /| |_) ) \____/| |_| |
+ \_____/ \___/ \______|\____)____/ \_____/ \___/ 
+ "
+echo ""
 
 #Check system software requirements 
 if [[ "$(uname)" == 'Linux' ]]; then
@@ -27,7 +36,6 @@ if [ $(ls | grep gowebgo.go) == "gowebgo.go" ]; then
 	echo "$pre Generating symlink..."
 	if [[ "$(uname)" == "Linux"* ]]; then
 		sudo ln -sf $PWD/gowebgo /usr/local/bin/gowebgo
-		mv ../Easyonset $HOME
 	elif [[ "$(uname)" == "Darwin"* ]]; then
 		sudo ln -sf $PWD/gowebgo /usr/local/bin/gowebgo
 	fi
