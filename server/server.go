@@ -321,15 +321,16 @@ func display() {
 	fmt.Println(get_n_byte_string('-', win_width))
 
 	// Print previous requests
-	fmt.Println("\nName\t\tHost\t\t\tResp\t\tCode\t\tTime\n")
+	fmt.Println("\nID\t\tName\t\tHost\t\t\tResp\t\tCode\t\tTime\n")
 	for i := 0; i < req_v_dist; i++ {
 		if i == 0 {
 			fmt.Print(esc["bg_yellow"])
 			fmt.Print(esc["black"])
 		}
-		req_name := req_names[req_num - i - 1]
+		req_id := req_num -i - 1
+		req_name := req_names[req_id]
 		r := reqs[req_name]
-		fmt.Println(req_name + "\t\t" + r.host + "\t\t" + strconv.FormatBool(r.data) + "\t\t" + r.recv_time)
+		fmt.Println(strconv.Itoa(req_id) + "\t\t" + req_name + "\t\t" + r.host + "\t\t" + strconv.FormatBool(r.data) + "\t\t" + "200" + "\t\t" + r.recv_time)
 		if i == 0 {
 			fmt.Print(esc["reset"])
 		}
@@ -400,7 +401,7 @@ func main() {
 	}
 
 	//Usage msg
-	usage_msg = "Usage: <cmd> <request>"
+	usage_msg = "Usage: <cmd> [-r req_id | request]"
 
 	start_time := time.Now().Format("10:00:00")
 	prog_name := "gowebgo"
