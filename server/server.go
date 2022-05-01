@@ -7,7 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"golang.org/x/term"
-	"html"
+//	"html"
 	"io"
 	"io/ioutil"
     "net/http"
@@ -39,14 +39,17 @@ type Connection struct {
     Response *http.Response
 }
 
+//Flags 
 var port int
 var err_str string
 var editor string
+var intercept bool
+
 var v_offset int
 var req_names []string
 var reqs map[string] RStruct
-var intercept bool
 var esc map[string] string
+var cmd_history []string
 
 //OS commands
 var os_cmds map[string] string
@@ -231,7 +234,7 @@ func quit(args []string) {
 
 func handle_request(w http.ResponseWriter, req *http.Request) {
 	recv_time := time.Now().Format("10:00:00")
-	fmt.Fprintf(w, "Hello, %q", html.EscapeString(req.URL.Path))
+	//fmt.Fprintf(w, "Hello, %q", html.EscapeString(req.URL.Path))
 	req_dump, err := httputil.DumpRequest(req, true)
 	if err != nil {
 		fmt.Println(err)
@@ -245,12 +248,8 @@ func handle_request(w http.ResponseWriter, req *http.Request) {
 		reqs[req_filename] = RStruct{req_filename: req_filename, recv_time: recv_time, host: req_host}
 		req_names = append(req_names, req_filename)
 	}
-	err_str = ""
 	display()
-	reader := bufio.NewReader(os.Stdin)
-	user_inp, _ := reader.ReadString('\n')
-	proc_cmd(user_inp)
-	display()
+	//TODO handle intercept 
 }
 
 func get_n_byte_string(c byte, n int) string {
@@ -269,6 +268,7 @@ func proc_cmd(cmd string) {
 		cmd_letter := split[0]
 		if c_struct, ok := cmd_dict[cmd_letter]; ok {
 			c_struct.function(split[1:])
+			cmd_history = append(cmd_history, cmd)
 		} else {
 			log.Println("\nInvalid command.")
 		}
@@ -304,6 +304,13 @@ func display() {
 	req_v_dist := 0
 
 	cls()
+	var inter_str string
+	if intercept {
+		inter_str = fmt.Sprintf("%s ON", esc["red"])
+	} else {
+		inter_str = fmt.Sprintf("%s OFF", esc["green"])
+	}
+	fmt.Printf("%s %s Intercept: %s %s\n", esc["bg_white"], esc["black"], inter_str, esc["reset"])
 
 	// Print latest request 
 	if len(req_names) > 0 {
@@ -353,10 +360,11 @@ func display() {
 
 func flag_init() {
 	const (
-		usage = "gowebgo [-p | -port]={port number}"
+		usage = "gowebgo [-p ={port number}] [-i true | false]"
 	)
 	flag.IntVar(&port, "p", 8081, "port number for proxy")
 	flag.StringVar(&editor, "e", "vim", "cli editor of choice")
+	flag.BoolVar(&intercept, "i", false, "intercept requests")
 	flag.Parse()
 }
 
@@ -374,6 +382,7 @@ func main() {
 	esc["reset"] = "\u001b[0m"
 	esc["bg_yellow"] = "\u001b[43m"
 	esc["bg_blue"] = "\u001b[44m"
+	esc["bg_white"] = "\u001b[47;1m"
 	esc["green"] = "\u001b[32m"
 	esc["black"] = "\u001b[30m"
 	esc["red"] = "\u001b[31m"
@@ -390,9 +399,9 @@ func main() {
 	cmd_dict["q"] = CmdStruct{display: "Quit", function: quit}
 
 	//Detect OS and set commands 
-	os := runtime.GOOS
+	host_os := runtime.GOOS
 	os_cmds = make(map[string] string)
-	if os == "Windows" {
+	if host_os == "Windows" {
 		os_cmds["clear"] = "cls"
 		os_cmds["remove"] = "del"
 	} else {
@@ -408,13 +417,20 @@ func main() {
 	flag_init()
 
 	fmt.Println("Running:", prog_name,
-				"\nOS:", os,
+				"\nOS:", host_os,
 				"\n@", start_time,
 				"\nPort:", port,
 				"\nEditor:", editor)
-
-	display()
+	//Server 
     http.HandleFunc("/", handle_request)
+    go http.ListenAndServe(":8081", nil)
 
-    log.Fatal(http.ListenAndServe(":8081", nil))
+	err_str = ""
+	//Run loop 
+	for ;; {
+		display()
+		reader := bufio.NewReader(os.Stdin)
+		user_inp, _ := reader.ReadString('\n')
+		proc_cmd(user_inp)
+	}
 }
