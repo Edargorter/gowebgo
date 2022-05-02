@@ -233,7 +233,7 @@ func quit(args []string) {
 }
 
 func handle_request(w http.ResponseWriter, req *http.Request) {
-	recv_time := time.Now().Format("10:00:00")
+	recv_time := time.Now().Format("15:04:05")
 	//fmt.Fprintf(w, "Hello, %q", html.EscapeString(req.URL.Path))
 	req_dump, err := httputil.DumpRequest(req, true)
 	if err != nil {
@@ -412,7 +412,7 @@ func main() {
 	//Usage msg
 	usage_msg = "Usage: <cmd> [-r req_id | request]"
 
-	start_time := time.Now().Format("10:00:00")
+	start_time := time.Now().Format("15:04:05")
 	prog_name := "gowebgo"
 	flag_init()
 
