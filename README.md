@@ -1,4 +1,4 @@
-# gowebgo
+# GoWebGo
 A CLI web proxy and request inspector/editor written in Golang.
 
 ![User Interface](images/ui.png "User Interface")
