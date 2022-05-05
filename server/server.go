@@ -31,7 +31,7 @@ type RStruct struct {
 
 type CmdStruct struct {
 	display string
-	function func([]string)
+	function func([]string)bool
 }
 
 type Connection struct {
@@ -39,25 +39,54 @@ type Connection struct {
     Response *http.Response
 }
 
-//Flags 
-var port int
-var err_str string
-var editor string
-var intercept bool
+const (
+	project_name = "Gowebgo"
+	input_buffer_length = 32
+	reqs_folder = "requests/"
+	gowebgo_usage = "gowebgo [-p ={port number}] [-i true | false]"
+)
 
-var v_offset int
+//Default values
+var intercept = false
+var v_offset = 17
+
+//Flags 
+var editor string
+var port int
+var counter = 0
+
+//Display 
 var req_names []string
-var reqs map[string] RStruct
-var esc map[string] string
-var cmd_history []string
+var reqs = make(map[string] RStruct)
+var err_str = ""
+var win_width = 75
+var win_height = 200
+
+//Colours. See https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html
+var esc = map[string]string{"reset" : "\u001b[0m",
+							"bg_yellow" : "\u001b[43m",
+							"bg_blue" : "\u001b[44m",
+							"bg_white" : "\u001b[47;1m",
+							"green" : "\u001b[32m",
+							"black" : "\u001b[30m",
+							"red" : "\u001b[31m"}
 
 //OS commands
 var os_cmds map[string] string
+//Cmd input buffer
+var cmd_buf = make([]byte, 1)
+var old_state *term.State
 
 //Gowebgo Commands 
-var usage_msg string
-var cmd_arr []string
-var cmd_dict map[string] CmdStruct
+var usage_msg = "Usage: <cmd> [-r req_id | request]"
+var cmd_arr = []string{"e", "r", "s", "d", "q"}
+var cmd_history []string
+var cmd_str string
+var cmd_dict = map[string]CmdStruct{"e" : CmdStruct{display: "Edit", function: edit_request},
+									"r" : CmdStruct{display: "Rename", function: rename_request},
+									"s" : CmdStruct{display: "Send", function: send_request},
+									"d" : CmdStruct{display: "Delete", function: delete_request},
+									"q" : CmdStruct{display: "Quit", function: quit}}
 
 // Probably not needed 
 func format_request(r *http.Request) string {
@@ -131,7 +160,7 @@ func get_req_name(args []string) (string, bool) {
 	return req_name, true
 }
 
-func edit_request(args []string) {
+func edit_request(args []string) bool {
 	if len(args) < 1 {
 		err_str = "Error: fewer args than expected."
 	} else {
@@ -145,17 +174,22 @@ func edit_request(args []string) {
 				err := cmd.Run()
 				if err != nil {
 					fmt.Println(err)
+					err_str = err.Error()
+					return false
 				}
 			} else {
 				err_str = fmt.Sprintf("Error: %s does not exist.", req_name)
+				return false
 			}
 		} else {
 			err_str = "Error: request does not exist."
+			return false
 		}
 	}
+	return true
 }
 
-func delete_request(args []string) {
+func delete_request(args []string) bool {
 	if len(args) < 1 {
 		err_str = "Error: fewer args than expected."
 	} else {
@@ -166,19 +200,22 @@ func delete_request(args []string) {
 				err := cmd.Run()
 				if err != nil {
 					err_str = err.Error()
-					return
+					return false
 				}
 				delete(reqs, req_name)
 			} else {
 				err_str = fmt.Sprintf("Error: %s does not exist.", req_name)
+				return false
 			}
 		} else {
 			err_str = "Error: request does not exist."
+			return false
 		}
 	}
+	return true
 }
 
-func rename_request(args []string) {
+func rename_request(args []string) bool {
 	if len(args) < 2 {
 		err_str = "Error: fewer args than expected."
 	} else {
@@ -191,45 +228,53 @@ func rename_request(args []string) {
 						req_names[i] = new_name
 						delete(reqs, req_name)
 						reqs[new_name] = req
-						err_str = fmt.Sprintf("Renaming to %s", new_name)
 						break
 					}
 				}
 			} else {
 				err_str = "Error: request does not exist."
+				return false
 			}
 		} else {
 			err_str = fmt.Sprintf("Error: %s does not exist.", req_name)
+			return false
 		}
 	}
+	return true
 }
 
-func send_request(args []string) {
+func send_request(args []string) bool {
 	req_name, found := get_req_name(args)
 	if found {
 		if req, ok := reqs[req_name]; ok {
 			fmt.Println(req.req_filename)
 		} else {
 			err_str = fmt.Sprintf("Error: %s does not exist.", req_name)
+			return false
 		}
 	} else {
 		err_str = "Error: request does not exist."
+		return false
 	}
+	return true
 }
 
-func dup_request(args []string) {
+func dup_request(args []string) bool {
 	req_name, found := get_req_name(args)
 	dup_name := args[len(args) - 1]
 	if !found {
 		err_str = "Error: request does not exist."
+		return false
 	} else {
 		req_names = append(req_names, dup_name)
 		reqs[dup_name] = reqs[req_name]
 	}
+	return true
 }
 
-func quit(args []string) {
+func quit(args []string) bool {
 	os.Exit(0)
+	return true
 }
 
 func handle_request(w http.ResponseWriter, req *http.Request) {
@@ -270,7 +315,7 @@ func proc_cmd(cmd string) {
 			c_struct.function(split[1:])
 			cmd_history = append(cmd_history, cmd)
 		} else {
-			log.Println("\nInvalid command.")
+			err_str = "Invalid command."
 		}
 	}
 }
@@ -288,16 +333,12 @@ func cls() {
 func display() {
 
 	//Get terminal dimensions 
-	win_width := 75
-	win_height := 200
-	if term.IsTerminal(0) {
-		width, height, err := term.GetSize(0)
-		if err != nil {
-			//log.Printf("Using default width %v\n", win_width)
-		} else {
-			win_width = width
-			win_height = height
-		}
+	width, height, err := term.GetSize(0)
+	if err != nil {
+		//log.Printf("Using default width %v\n", win_width)
+	} else {
+		win_width = width
+		win_height = height
 	}
 
 	req_num := len(req_names) + win_height - win_height
@@ -310,7 +351,7 @@ func display() {
 	} else {
 		inter_str = fmt.Sprintf("%s OFF", esc["green"])
 	}
-	fmt.Printf("%s %s Intercept: %s %s\n", esc["bg_white"], esc["black"], inter_str, esc["reset"])
+	fmt.Printf("%s %s Intercept: %s %s\r\n", esc["bg_white"], esc["black"], inter_str, esc["reset"])
 
 	// Print latest request 
 	if len(req_names) > 0 {
@@ -325,10 +366,10 @@ func display() {
 	}
 
 	//Separator 
-	fmt.Println(get_n_byte_string('-', win_width))
+	fmt.Print(get_n_byte_string('-', win_width) + "\r\n")
 
 	// Print previous requests
-	fmt.Println("\nID\t\tName\t\tHost\t\t\tResp\t\tCode\t\tTime\n")
+	fmt.Print("\r\nID\t\tName\t\tHost\t\t\tResp\t\tCode\t\tTime\r\n\r\n")
 	for i := 0; i < req_v_dist; i++ {
 		if i == 0 {
 			fmt.Print(esc["bg_yellow"])
@@ -337,70 +378,57 @@ func display() {
 		req_id := req_num -i - 1
 		req_name := req_names[req_id]
 		r := reqs[req_name]
-		fmt.Println(strconv.Itoa(req_id) + "\t\t" + req_name + "\t\t" + r.host + "\t\t" + strconv.FormatBool(r.data) + "\t\t" + "200" + "\t\t" + r.recv_time)
+		fmt.Print(strconv.Itoa(req_id) + "\t\t" + req_name + "\t\t" + r.host + "\t\t" + strconv.FormatBool(r.data) + "\t\t" + "200" + "\t\t" + r.recv_time + "\r\n")
 		if i == 0 {
 			fmt.Print(esc["reset"])
 		}
 	}
 	for i := 0; i < v_offset - req_v_dist; i++ {
-		fmt.Println()
+		fmt.Print("\r\n")
 	}
 
 	//Separator 
-	fmt.Println("\n" + get_n_byte_string('-', win_width) + "\n")
+	fmt.Print("\r\n" + get_n_byte_string('-', win_width) + "\r\n\r\n")
 
 	//Display options 
-	fmt.Println(usage_msg)
-	fmt.Println("\n" + err_str + "\n")
+	fmt.Print(usage_msg + "\r\n")
 	for _, cmd_letter := range cmd_arr {
 		fmt.Print(fmt.Sprintf("%s (%v) ", cmd_dict[cmd_letter].display, cmd_letter))
 	}
-	fmt.Print("\n> ")
+	fmt.Println("\r\n" + err_str)
+	fmt.Print("\r\n> ")
+	fmt.Print(string(cmd_str))
 }
 
-func flag_init() {
-	const (
-		usage = "gowebgo [-p ={port number}] [-i true | false]"
-	)
-	flag.IntVar(&port, "p", 8081, "port number for proxy")
-	flag.StringVar(&editor, "e", "vim", "cli editor of choice")
-	flag.BoolVar(&intercept, "i", false, "intercept requests")
-	flag.Parse()
+func read_stdin() {
+
+	for ;; {
+		//Read one byte 
+		_, err := os.Stdin.Read(cmd_buf)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		//If "enter", then process command and set cmd_str to nothing 
+		if cmd_buf[0] == 13 {
+			proc_cmd(cmd_str)
+			cmd_str = ""
+			display()
+		} else {
+			//Otherwise, add to cmd string 
+			char := string(cmd_buf[0])
+			//Print to stdout 
+			fmt.Print(char)
+			cmd_str += char
+		}
+	}
 }
 
 func main() {
-	// Initialise 
-	reqs = make(map[string] RStruct)
-
-	//Default values
-	intercept = false
-	v_offset = 17
-	port = 8081
-
-	//Colours. See https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html
-	esc = make(map[string] string)
-	esc["reset"] = "\u001b[0m"
-	esc["bg_yellow"] = "\u001b[43m"
-	esc["bg_blue"] = "\u001b[44m"
-	esc["bg_white"] = "\u001b[47;1m"
-	esc["green"] = "\u001b[32m"
-	esc["black"] = "\u001b[30m"
-	esc["red"] = "\u001b[31m"
-
-	//Cmd array
-	cmd_arr = []string{"e", "r", "s", "d", "q"}
-
-	//Cmd struct dict
-	cmd_dict = make(map[string] CmdStruct)
-	cmd_dict["e"] = CmdStruct{display: "Edit", function: edit_request}
-	cmd_dict["r"] = CmdStruct{display: "Rename", function: rename_request}
-	cmd_dict["s"] = CmdStruct{display: "Send", function: send_request}
-	cmd_dict["d"] = CmdStruct{display: "Delete", function: delete_request}
-	cmd_dict["q"] = CmdStruct{display: "Quit", function: quit}
-
 	//Detect OS and set commands 
 	host_os := runtime.GOOS
 	os_cmds = make(map[string] string)
+
 	if host_os == "Windows" {
 		os_cmds["clear"] = "cls"
 		os_cmds["remove"] = "del"
@@ -409,28 +437,42 @@ func main() {
 		os_cmds["remove"] = "rm"
 	}
 
-	//Usage msg
-	usage_msg = "Usage: <cmd> [-r req_id | request]"
+	//Get terminal dimensions 
+	if term.IsTerminal(0) {
+		width, height, err := term.GetSize(0)
+		if err != nil {
+			//log.Printf("Using default width %v\n", win_width)
+		} else {
+			win_width = width
+			win_height = height
+		}
+	}
 
 	start_time := time.Now().Format("15:04:05")
-	prog_name := "gowebgo"
-	flag_init()
 
-	fmt.Println("Running:", prog_name,
+	flag.IntVar(&port, "p", 8081, "port number for proxy")
+	flag.StringVar(&editor, "e", "vim", "cli editor of choice")
+	flag.BoolVar(&intercept, "i", false, "intercept requests")
+	flag.Parse()
+
+	fmt.Println("Running:", project_name,
 				"\nOS:", host_os,
 				"\n@", start_time,
 				"\nPort:", port,
 				"\nEditor:", editor)
-	//Server 
-    http.HandleFunc("/", handle_request)
-    go http.ListenAndServe(":8081", nil)
 
-	err_str = ""
-	//Run loop 
-	for ;; {
-		display()
-		reader := bufio.NewReader(os.Stdin)
-		user_inp, _ := reader.ReadString('\n')
-		proc_cmd(user_inp)
+	old_state, err := term.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
+	//Switch back to old state 
+	defer term.Restore(int(os.Stdin.Fd()), old_state)
+
+	//Start Stdin goroutine
+	go read_stdin()
+
+	//Server as separate Go routine 
+    http.HandleFunc("/", handle_request)
+    log.Fatal(http.ListenAndServe(":8081", nil))
 }
