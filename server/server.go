@@ -109,32 +109,28 @@ func format_request(r *http.Request) string {
 	return strings.Join(request, "\n")
 }
 
-func ReadHTTPFromFile(r io.Reader) ([]Connection, error) {
+func read_http_from_file(r io.Reader, req_filename string) (Connection, error) {
     buf := bufio.NewReader(r)
-    stream := make([]Connection, 0)
+    var stream Connection
 
-    for {
-        req, err := http.ReadRequest(buf)
-        if err == io.EOF {
-            break
-        }
-        if err != nil {
-            return stream, err
-        }
+	req, err := http.ReadRequest(buf)
+	if err != nil {
+		return stream, err
+	}
 
-        resp, err := http.ReadResponse(buf, req)
-        if err != nil {
-            return stream, err
-        }
+	resp, err := http.ReadResponse(buf, req)
+	if err != nil {
+		return stream, err
+	}
 
-        //save response body
-        b := new(bytes.Buffer)
-        io.Copy(b, resp.Body)
-        resp.Body.Close()
-        resp.Body = ioutil.NopCloser(b)
+	//save response body
+	b := new(bytes.Buffer)
+	io.Copy(b, resp.Body)
+	resp.Body.Close()
+	resp.Body = ioutil.NopCloser(b)
 
-        stream = append(stream, Connection{Request: req, Response: resp})
-    }
+	stream = Connection{Request: req, Response: resp}
+
     return stream, nil
 }
 
@@ -167,7 +163,7 @@ func edit_request(args []string) bool {
 		req_name, found := get_req_name(args)
 		if found {
 			if req, ok := reqs[req_name]; ok {
-				cmd := exec.Command(editor, "requests/" + req.req_filename)
+				cmd := exec.Command(editor, reqs_folder + req.req_filename)
 				cmd.Stdin = os.Stdin
 				cmd.Stdout = os.Stdout
 				cmd.Stderr = os.Stderr
@@ -196,7 +192,7 @@ func delete_request(args []string) bool {
 		req_name, found := get_req_name(args)
 		if found {
 			if req, ok := reqs[req_name]; ok {
-				cmd := exec.Command(os_cmds["remove"], "requests/" + req.req_filename)
+				cmd := exec.Command(os_cmds["remove"], reqs_folder + req.req_filename)
 				err := cmd.Run()
 				if err != nil {
 					err_str = err.Error()
@@ -247,7 +243,15 @@ func send_request(args []string) bool {
 	req_name, found := get_req_name(args)
 	if found {
 		if req, ok := reqs[req_name]; ok {
-			fmt.Println(req.req_filename)
+			ioreader , err := os.Open(reqs_folder + req.req_filename)
+			if err != nil {
+				err_str = err.Error()
+				return false
+			}
+			req_stream, err := read_http_from_file(ioreader, req.req_filename)
+			fmt.Printf("%T\r\n", req_stream)
+			fmt.Print(req_stream)
+			fmt.Print("\r\n")
 		} else {
 			err_str = fmt.Sprintf("Error: %s does not exist.", req_name)
 			return false
@@ -285,7 +289,7 @@ func handle_request(w http.ResponseWriter, req *http.Request) {
 		fmt.Println(err)
 	}
 	req_filename := fmt.Sprintf("req_%v", len(req_names))
-	err = ioutil.WriteFile("requests/" + req_filename, req_dump, 0777)
+	err = ioutil.WriteFile(reqs_folder + req_filename, req_dump, 0777)
 	if err != nil {
 		fmt.Println(err)
 	} else {
@@ -355,7 +359,7 @@ func display() {
 
 	// Print latest request 
 	if len(req_names) > 0 {
-		last_req_file := fmt.Sprintf("requests/%v", reqs[req_names[req_num-1]].req_filename)
+		last_req_file := fmt.Sprintf(reqs_folder + "%v", reqs[req_names[req_num-1]].req_filename)
 		data, err := ioutil.ReadFile(last_req_file)
 		if err != nil {
 			log.Fatal(err)
@@ -414,6 +418,11 @@ func read_stdin() {
 			proc_cmd(cmd_str)
 			cmd_str = ""
 			display()
+		} else if cmd_buf[0] == 0x7f {
+			fmt.Print("\b\033[K")
+			if len(cmd_str) > 0 {
+				cmd_str = cmd_str[:len(cmd_str) - 1]
+			}
 		} else {
 			//Otherwise, add to cmd string 
 			char := string(cmd_buf[0])
