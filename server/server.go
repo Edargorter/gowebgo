@@ -109,6 +109,21 @@ func format_request(r *http.Request) string {
 	return strings.Join(request, "\n")
 }
 
+func read_request_from_file(req RStruct) (*http.Request, bool) {
+	req_file, err := os.Open(reqs_folder + req.req_filename)
+	if err != nil {
+		err_str = err.Error()
+		return nil, false
+	}
+	http_req, err := http.ReadRequest(bufio.NewReader(req_file))
+	if err != nil {
+		err_str = err.Error()
+		return nil, false
+	}
+	fmt.Printf("%T\n", req)
+	return http_req, true
+}
+
 func read_http_from_file(r io.Reader, req_filename string) (Connection, error) {
     buf := bufio.NewReader(r)
     var stream Connection
@@ -243,14 +258,25 @@ func send_request(args []string) bool {
 	req_name, found := get_req_name(args)
 	if found {
 		if req, ok := reqs[req_name]; ok {
-			ioreader , err := os.Open(reqs_folder + req.req_filename)
-			if err != nil {
-				err_str = err.Error()
+			r, ok := read_request_from_file(req)
+			if !ok {
+				err_str = fmt.Sprintf("Error: error reading request %s.", req_name)
 				return false
 			}
-			req_stream, err := read_http_from_file(ioreader, req.req_filename)
-			fmt.Printf("%T\r\n", req_stream)
-			fmt.Print(req_stream)
+			fmt.Print(r)
+			/*
+			client := &http.Client{}
+			resp, err := client.Do(r)
+			if err != nil {
+				err_str = fmt.Sprintf("Error: error sending request %s.", req_name)
+				return false
+			}
+			body, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				err_str = fmt.Sprintf("Error: error reading response to %s.", req_name)
+				return false
+			}
+			*/
 			fmt.Print("\r\n")
 		} else {
 			err_str = fmt.Sprintf("Error: %s does not exist.", req_name)
@@ -281,6 +307,7 @@ func quit(args []string) bool {
 	return true
 }
 
+//Look at https://pkg.go.dev/net/http/httputil#ReverseProxy
 func handle_request(w http.ResponseWriter, req *http.Request) {
 	recv_time := time.Now().Format("15:04:05")
 	//fmt.Fprintf(w, "Hello, %q", html.EscapeString(req.URL.Path))
@@ -419,9 +446,9 @@ func read_stdin() {
 			cmd_str = ""
 			display()
 		} else if cmd_buf[0] == 0x7f {
-			fmt.Print("\b\033[K")
 			if len(cmd_str) > 0 {
 				cmd_str = cmd_str[:len(cmd_str) - 1]
+				fmt.Print("\b\033[K")
 			}
 		} else {
 			//Otherwise, add to cmd string 
