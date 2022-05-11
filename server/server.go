@@ -6,7 +6,6 @@ import (
 	"os/exec"
 	"flag"
 	"fmt"
-	"golang.org/x/term"
 //	"html"
 	"io"
 	"io/ioutil"
@@ -19,7 +18,56 @@ import (
 	"bufio"
 	"bytes"
 	"runtime"
+
+	"golang.org/x/term"
+	"github.com/go-httpproxy/httpproxy"
 )
+
+/* HTTPProxy funcs for github.com/go-httpproxy/httpproxy */
+
+func OnError(ctx *httpproxy.Context, where string, err *httpproxy.Error, opErr error) {
+	// Log errors.
+	log.Printf("ERR: %s: %s [%s]", where, err, opErr)
+}
+
+func OnAccept(ctx *httpproxy.Context, w http.ResponseWriter, r *http.Request) bool {
+	// Handle local request has path "/info"
+	if r.Method == "GET" && !r.URL.IsAbs() && r.URL.Path == "/info" {
+		w.Write([]byte("This is go-httpproxy."))
+		return true
+	}
+	return false
+}
+
+func OnAuth(ctx *httpproxy.Context, authType string, user string, pass string) bool {
+	// Auth test user.
+	if user == "test" && pass == "1234" {
+		return true
+	}
+	return false
+}
+
+func OnConnect(ctx *httpproxy.Context, host string) (ConnectAction httpproxy.ConnectAction, newHost string) {
+	// Apply "Man in the Middle" to all ssl connections. Never change host.
+	return httpproxy.ConnectMitm, host
+}
+
+func OnRequest(ctx *httpproxy.Context, req *http.Request) (resp *http.Response) {
+	// Log proxying requests.
+	log.Printf("INFO: Proxy: %s %s", req.Method, req.URL.String())
+	return
+}
+
+func OnResponse(ctx *httpproxy.Context, req *http.Request, resp *http.Response) {
+	// Add header "Via: go-httpproxy".
+	resp.Header.Add("Via", "go-httpproxy")
+	/*
+	body, _ := io.ReadAll(resp.Body)
+	log.Printf("RESP %s", string(body[:]))
+	*/
+}
+
+/* End of HTTPProxy funcs */
 
 type RStruct struct {
 	req_filename string
@@ -49,6 +97,8 @@ const (
 //Default values
 var intercept = false
 var v_offset = 17
+var username string
+var password string
 
 //Flags 
 var editor string
@@ -303,6 +353,7 @@ func dup_request(args []string) bool {
 }
 
 func quit(args []string) bool {
+	clean_up()
 	os.Exit(0)
 	return true
 }
@@ -460,6 +511,10 @@ func read_stdin() {
 	}
 }
 
+func clean_up() {
+	term.Restore(int(os.Stdin.Fd()), old_state)
+}
+
 func main() {
 	//Detect OS and set commands 
 	host_os := runtime.GOOS
@@ -488,6 +543,8 @@ func main() {
 
 	flag.IntVar(&port, "p", 8081, "port number for proxy")
 	flag.StringVar(&editor, "e", "vim", "cli editor of choice")
+	flag.StringVar(&username, "u", "", "auth: username")
+	flag.StringVar(&password, "P", "", "auth: password")
 	flag.BoolVar(&intercept, "i", false, "intercept requests")
 	flag.Parse()
 
@@ -497,6 +554,7 @@ func main() {
 				"\nPort:", port,
 				"\nEditor:", editor)
 
+	/*
 	old_state, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
 		fmt.Println(err)
@@ -504,11 +562,28 @@ func main() {
 	}
 	//Switch back to old state 
 	defer term.Restore(int(os.Stdin.Fd()), old_state)
+	*/
 
 	//Start Stdin goroutine
 	go read_stdin()
 
-	//Server as separate Go routine 
+	/* Server 
+
     http.HandleFunc("/", handle_request)
     log.Fatal(http.ListenAndServe(":8081", nil))
+
+	*/
+	// Create a new proxy with default certificate pair.
+	prx, _ := httpproxy.NewProxy()
+
+	// Set handlers.
+	prx.OnError = OnError
+	prx.OnAccept = OnAccept
+	prx.OnAuth = OnAuth
+	prx.OnConnect = OnConnect
+	prx.OnRequest = OnRequest
+	prx.OnResponse = OnResponse
+
+	// Listen...
+	http.ListenAndServe(":8081", prx)
 }
