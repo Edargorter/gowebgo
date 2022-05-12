@@ -23,77 +23,6 @@ import (
 	"github.com/go-httpproxy/httpproxy"
 )
 
-/* HTTPProxy funcs for github.com/go-httpproxy/httpproxy */
-
-func OnError(ctx *httpproxy.Context, where string, err *httpproxy.Error, opErr error) {
-	// Log errors.
-	log.Printf("ERR: %s: %s [%s]", where, err, opErr)
-}
-
-func OnAccept(ctx *httpproxy.Context, w http.ResponseWriter, r *http.Request) bool {
-	// Handle local request has path "/info"
-	if r.Method == "GET" && !r.URL.IsAbs() && r.URL.Path == "/info" {
-		w.Write([]byte("This is go-httpproxy."))
-		return true
-	}
-	return false
-}
-
-func OnAuth(ctx *httpproxy.Context, authType string, user string, pass string) bool {
-	// Auth test user.
-	if user == "test" && pass == "1234" {
-		return true
-	}
-	return false
-}
-
-func OnConnect(ctx *httpproxy.Context, host string) (ConnectAction httpproxy.ConnectAction, newHost string) {
-	// Apply "Man in the Middle" to all ssl connections. Never change host.
-	return httpproxy.ConnectMitm, host
-}
-
-func OnRequest(ctx *httpproxy.Context, req *http.Request) (resp *http.Response) {
-	// Log proxying requests.
-	log.Printf("INFO: Proxy: %s %s", req.Method, req.URL.String())
-	return
-}
-
-func OnResponse(ctx *httpproxy.Context, req *http.Request, resp *http.Response) {
-	// Add header "Via: go-httpproxy".
-	resp.Header.Add("Via", "go-httpproxy")
-	/*
-	body, _ := io.ReadAll(resp.Body)
-	log.Printf("RESP %s", string(body[:]))
-	*/
-}
-
-/* End of HTTPProxy funcs */
-
-type RStruct struct {
-	req_filename string
-	resp_filename string
-	recv_time string
-	host string
-	data bool
-}
-
-type CmdStruct struct {
-	display string
-	function func([]string)bool
-}
-
-type Connection struct {
-    Request  *http.Request
-    Response *http.Response
-}
-
-const (
-	project_name = "Gowebgo"
-	input_buffer_length = 32
-	reqs_folder = "requests/"
-	gowebgo_usage = "gowebgo [-p ={port number}] [-i true | false]"
-)
-
 //Default values
 var intercept = false
 var v_offset = 17
@@ -137,6 +66,96 @@ var cmd_dict = map[string]CmdStruct{"e" : CmdStruct{display: "Edit", function: e
 									"s" : CmdStruct{display: "Send", function: send_request},
 									"d" : CmdStruct{display: "Delete", function: delete_request},
 									"q" : CmdStruct{display: "Quit", function: quit}}
+
+/* HTTPProxy funcs for github.com/go-httpproxy/httpproxy */
+
+func OnError(ctx *httpproxy.Context, where string, err *httpproxy.Error, opErr error) {
+	// Log errors.
+	log.Printf("ERR: %s: %s [%s]", where, err, opErr)
+}
+
+func OnAccept(ctx *httpproxy.Context, w http.ResponseWriter, r *http.Request) bool {
+	// Handle local request has path "/info"
+	if r.Method == "GET" && !r.URL.IsAbs() && r.URL.Path == "/info" {
+		w.Write([]byte("This is Gowebgo, operating with go-httpproxy."))
+		return true
+	}
+	return false
+}
+
+func OnAuth(ctx *httpproxy.Context, authType string, user string, pass string) bool {
+	// Auth test user.
+	if user == username && pass == password {
+		return true
+	}
+	return false
+}
+
+func OnConnect(ctx *httpproxy.Context, host string) (ConnectAction httpproxy.ConnectAction, newHost string) {
+	// Apply "Man in the Middle" to all ssl connections. Never change host.
+	return httpproxy.ConnectMitm, host
+}
+
+func OnRequest(ctx *httpproxy.Context, req *http.Request) (resp *http.Response) {
+	// Log proxying requests.
+	log.Printf("INFO: Proxy: %s %s", req.Method, req.URL.String())
+	recv_time := time.Now().Format("15:04:05")
+	//fmt.Fprintf(w, "Hello, %q", html.EscapeString(req.URL.Path))
+	req_dump, err := httputil.DumpRequest(req, true)
+	if err != nil {
+		fmt.Println(err)
+	}
+	req_filename := fmt.Sprintf("req_%v", len(req_names))
+	err = ioutil.WriteFile(reqs_folder + req_filename, req_dump, 0777)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		req_host := req.Host
+		reqs[req_filename] = RStruct{req_filename: req_filename, recv_time: recv_time, host: req_host}
+		req_names = append(req_names, req_filename)
+	}
+	//display()
+	return
+}
+
+func OnResponse(ctx *httpproxy.Context, req *http.Request, resp *http.Response) {
+	// Add header "Via: go-httpproxy".
+	resp.Header.Add("Via", "go-httpproxy")
+	fmt.Println(req)
+	fmt.Println(resp)
+	/*
+	body, _ := io.ReadAll(resp.Body)
+	log.Printf("RESP %s", string(body[:]))
+	*/
+}
+
+/* End of HTTPProxy funcs */
+
+type RStruct struct {
+	req_filename string
+	resp_filename string
+	recv_time string
+	host string
+	data bool
+}
+
+type CmdStruct struct {
+	display string
+	function func([]string)bool
+}
+
+type Connection struct {
+    Request  *http.Request
+    Response *http.Response
+}
+
+const (
+	project_name = "Gowebgo"
+	input_buffer_length = 32
+	reqs_folder = "requests/"
+	gowebgo_usage = "gowebgo [-p ={port number}] [-i true | false]"
+)
+
 
 // Probably not needed 
 func format_request(r *http.Request) string {
@@ -543,8 +562,8 @@ func main() {
 
 	flag.IntVar(&port, "p", 8081, "port number for proxy")
 	flag.StringVar(&editor, "e", "vim", "cli editor of choice")
-	flag.StringVar(&username, "u", "", "auth: username")
-	flag.StringVar(&password, "P", "", "auth: password")
+	flag.StringVar(&username, "u", "user", "auth: username")
+	flag.StringVar(&password, "P", "pass", "auth: password")
 	flag.BoolVar(&intercept, "i", false, "intercept requests")
 	flag.Parse()
 

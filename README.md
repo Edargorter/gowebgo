@@ -1,5 +1,5 @@
-# gowebgo
-A CLI web proxy and request inspector/editor written in Golang.
+# Gowebgo
+A CLI web proxy and request inspector/editor written in Golang, adapting the [go-httpproxy](https://pkg.go.dev/github.com/go-httpproxy/httpproxy) library (source available [here](https://github.com/go-httpproxy/httpproxy)).
 
 ![User Interface](images/ui.png "User Interface")
 
