@@ -28,6 +28,8 @@ var intercept = false
 var v_offset = 17
 var username string
 var password string
+var cert_file string
+var key_file string
 
 //Flags 
 var editor string
@@ -76,9 +78,20 @@ func OnError(ctx *httpproxy.Context, where string, err *httpproxy.Error, opErr e
 
 func OnAccept(ctx *httpproxy.Context, w http.ResponseWriter, r *http.Request) bool {
 	// Handle local request has path "/info"
-	if r.Method == "GET" && !r.URL.IsAbs() && r.URL.Path == "/info" {
-		w.Write([]byte("This is Gowebgo, operating with go-httpproxy."))
-		return true
+	if r.Method == "GET" && !r.URL.IsAbs() {
+		if r.URL.Path == "/info" {
+			w.Write([]byte("This is Gowebgo, operating with go-httpproxy."))
+			return true
+		} else if r.URL.Path == "/cert" {
+			file_bytes, err := ioutil.ReadFile(cert_file)
+			if err != nil {
+				panic(err)
+			}
+			w.WriteHeader(http.StatusOK)
+			w.Header().Set("Content-Type", "application/octet-stream")
+			w.Header().Set("Content-Disposition", "attachment; filename=ca_cert.pem")
+			w.Write(file_bytes)
+		}
 	}
 	return false
 }
@@ -98,7 +111,8 @@ func OnConnect(ctx *httpproxy.Context, host string) (ConnectAction httpproxy.Con
 
 func OnRequest(ctx *httpproxy.Context, req *http.Request) (resp *http.Response) {
 	// Log proxying requests.
-	log.Printf("INFO: Proxy: %s %s", req.Method, req.URL.String())
+	log.Printf("INFO: Proxy: %s %s %d", req.Method, req.URL.String(), ctx.Prx.SessionNo)
+	log.Printf("SESSION NO: %d CONTEXT NO %d", ctx.Prx.SessionNo, ctx.SubSessionNo)
 	recv_time := time.Now().Format("15:04:05")
 	//fmt.Fprintf(w, "Hello, %q", html.EscapeString(req.URL.Path))
 	req_dump, err := httputil.DumpRequest(req, true)
@@ -562,8 +576,10 @@ func main() {
 
 	flag.IntVar(&port, "p", 8081, "port number for proxy")
 	flag.StringVar(&editor, "e", "vim", "cli editor of choice")
-	flag.StringVar(&username, "u", "user", "auth: username")
+	flag.StringVar(&username, "U", "user", "auth: username")
 	flag.StringVar(&password, "P", "pass", "auth: password")
+	flag.StringVar(&cert_file, "pub", "ca_cert.pem", "Public key (CA cert)")
+	flag.StringVar(&key_file, "priv", "ca_key.pem", "Private key")
 	flag.BoolVar(&intercept, "i", false, "intercept requests")
 	flag.Parse()
 
