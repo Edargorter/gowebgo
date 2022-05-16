@@ -610,7 +610,7 @@ func main() {
 	flag.StringVar(&editor, "e", "vim", "cli editor of choice")
 	flag.StringVar(&username, "U", "user", "auth: username")
 	flag.StringVar(&password, "P", "pass", "auth: password")
-	flag.StringVar(&cert_file, "pub", "ca_cert.pem", "Public key (CA cert)")
+	flag.StringVar(&cert_file, "pub", "gowebgo_cert.pem", "Public key (CA cert)")
 	flag.StringVar(&key_file, "priv", "ca_key.pem", "Private key")
 	flag.BoolVar(&intercept, "i", false, "intercept requests")
 	flag.Parse()
