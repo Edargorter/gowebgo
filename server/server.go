@@ -618,12 +618,12 @@ func main() {
 				"\nPort:", port,
 				"\nEditor:", editor)
 
-	old_state, err := term.MakeRaw(int(os.Stdin.Fd()))
+	prev_state, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
+	old_state = prev_state
 	//Switch back to old state 
-	defer term.Restore(int(os.Stdin.Fd()), old_state)
 
 	//Start Stdin goroutine
 	go read_stdin()

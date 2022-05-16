@@ -24,3 +24,4 @@ server/requests/*
 
 # VIM Swap
 [._]*.s[a-v][a-z]
+*.*.swp
