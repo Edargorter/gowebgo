@@ -6,7 +6,7 @@ import (
 	"os/exec"
 	"flag"
 	"fmt"
-	"io"
+	//"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
@@ -34,11 +34,6 @@ type RStruct struct {
 type CmdStruct struct {
 	display string
 	function func([]string)bool
-}
-
-type Connection struct {
-    Request  *http.Request
-    Response *http.Response
 }
 
 const (
@@ -207,6 +202,7 @@ func read_request_from_file(req RStruct) (*http.Request, bool) {
 	return http_req, true
 }
 
+/*
 func read_http_from_file(r io.Reader, req_filename string) (Connection, error) {
     buf := bufio.NewReader(r)
     var stream Connection
@@ -231,6 +227,7 @@ func read_http_from_file(r io.Reader, req_filename string) (Connection, error) {
 
     return stream, nil
 }
+*/
 
 // CMD funcs 
 
@@ -508,7 +505,6 @@ func display() {
 
 	//Set vertical offset for previous requests 
 	req_v_dist = int(math.Min(float64(req_num), float64(v_offset)))
-	req_v_dist = int(math.Max(float64(req_v_dist), float64(v_offset)))
 
 	//Separator 
 	fmt.Print(get_n_byte_string('-', win_width) + "\r\n\r\n")
