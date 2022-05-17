@@ -35,11 +35,11 @@ if [ $(ls | grep gowebgo.go) == "gowebgo.go" ]; then
 	go build .
 	echo "$pre Generating symlink..."
 	if [[ "$(uname)" == "Linux"* ]]; then
-		sudo ln -sf $PWD/gowebgo /usr/local/bin/gowebgo
+		sudo ln -sf $PWD/gowebgo /usr/local/bin/gwg
 	elif [[ "$(uname)" == "Darwin"* ]]; then
-		sudo ln -sf $PWD/gowebgo /usr/local/bin/gowebgo
+		sudo ln -sf $PWD/gowebgo /usr/local/bin/gwg
 	fi
-	echo "Installation complete. Go web go!"
+	echo "Installation complete. Go web go! Run with 'gwg'."
 else
 	echo "Please navigate to 'gowebgo' folder and restart installation."
 fi
