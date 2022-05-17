@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"os/signal"
 	"math"
 	"os/exec"
 	"flag"
@@ -55,7 +56,6 @@ var key_file string
 //Flags 
 var editor string
 var port int
-var counter = 0
 
 //Display 
 var req_names []string
@@ -74,7 +74,7 @@ var esc = map[string]string{"reset" : "\u001b[0m",
 							"red" : "\u001b[31m"}
 
 //OS commands
-var os_cmds map[string] string
+var os_cmds = make(map[string] string)
 //Cmd input buffer
 var cmd_buf = make([]byte, 1)
 var old_state *term.State
@@ -138,12 +138,12 @@ func OnRequest(ctx *httpproxy.Context, req *http.Request) (resp *http.Response) 
 	//fmt.Fprintf(w, "Hello, %q", html.EscapeString(req.URL.Path))
 	req_dump, err := httputil.DumpRequest(req, true)
 	if err != nil {
-		fmt.Println(err)
+		err_str = err.Error()
 	}
 	req_filename := fmt.Sprintf("req_%v", len(req_names))
 	err = ioutil.WriteFile(reqs_folder + req_filename, req_dump, 0777)
 	if err != nil {
-		fmt.Println(err)
+		err_str = err.Error()
 	} else {
 		req_host := req.Host
 		reqs[req_filename] = RStruct{req_filename: req_filename, recv_time: recv_time, host: req_host}
@@ -156,8 +156,6 @@ func OnRequest(ctx *httpproxy.Context, req *http.Request) (resp *http.Response) 
 func OnResponse(ctx *httpproxy.Context, req *http.Request, resp *http.Response) {
 	// Add header "Via: go-httpproxy".
 	resp.Header.Add("Via", "go-httpproxy")
-	//fmt.Println(req)
-	//fmt.Println(resp)
 	/*
 	body, _ := io.ReadAll(resp.Body)
 	log.Printf("RESP %s", string(body[:]))
@@ -383,7 +381,7 @@ func dup_request(args []string) bool {
 }
 
 func quit(args []string) bool {
-	clean_up()
+	term.Restore(int(os.Stdin.Fd()), old_state)
 	os.Exit(0)
 	return true
 }
@@ -474,13 +472,13 @@ func display() {
 	cls()
 	var inter_str string
 	if intercept {
-		inter_str = fmt.Sprintf("%s ON", esc["red"])
+		inter_str = fmt.Sprintf("%sON", esc["red"])
 	} else {
-		inter_str = fmt.Sprintf("%s OFF", esc["green"])
+		inter_str = fmt.Sprintf("%sOFF", esc["green"])
 	}
 
-	//Indicate status of intercept flag 
-	fmt.Printf("%s %s Intercept: %s %s\r\n", esc["bg_white"], esc["black"], inter_str, esc["reset"])
+	//Indicate status 
+	fmt.Printf("%s %s -Gowebgo-  Port: %d | Editor: %s | Intercept: %s %s\r\n", esc["bg_white"], esc["black"], port, editor, inter_str, esc["reset"])
 
 	var disp int = last_req_v
 
@@ -545,25 +543,35 @@ func display() {
 
 func read_stdin() {
 
-	for ;; {
+	for {
 		//Read one byte 
 		_, err := os.Stdin.Read(cmd_buf)
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
+		c := cmd_buf[0]
+		switch c {
+
 		//If "enter", then process command and set cmd_str to nothing 
-		if cmd_buf[0] == 13 {
+		case 13:
 			proc_cmd(cmd_str)
 			cmd_str = ""
 			display()
-		} else if cmd_buf[0] == 0x7f {
+
+		//Backspace character
+		case 0x7f:
 			if len(cmd_str) > 0 {
 				cmd_str = cmd_str[:len(cmd_str) - 1]
 				fmt.Print("\b\033[K")
 			}
-		} else {
-			//Otherwise, add to cmd string 
+
+		//SIGINT -> quit
+		case 3:
+			quit(make([]string, 0))
+
+		//Otherwise, add c to cmd string 
+		default:
 			char := string(cmd_buf[0])
 			//Print to stdout 
 			fmt.Print(char)
@@ -572,14 +580,9 @@ func read_stdin() {
 	}
 }
 
-func clean_up() {
-	term.Restore(int(os.Stdin.Fd()), old_state)
-}
-
 func main() {
 	//Detect OS and set commands 
 	host_os := runtime.GOOS
-	os_cmds = make(map[string] string)
 
 	if host_os == "Windows" {
 		os_cmds["clear"] = "cls"
@@ -606,8 +609,8 @@ func main() {
 	flag.StringVar(&editor, "e", "vim", "cli editor of choice")
 	flag.StringVar(&username, "U", "user", "auth: username")
 	flag.StringVar(&password, "P", "pass", "auth: password")
-	flag.StringVar(&cert_file, "pub", "ca_cert.pem", "Public key (CA cert)")
-	flag.StringVar(&key_file, "priv", "ca_key.pem", "Private key")
+	flag.StringVar(&cert_file, "pub", "gowebgo_cert.pem", "Public key (CA cert)")
+	flag.StringVar(&key_file, "priv", "gowebgo_key.pem", "Private key")
 	flag.BoolVar(&intercept, "i", false, "intercept requests")
 	flag.Parse()
 
@@ -618,22 +621,26 @@ func main() {
 				"\nPort:", port,
 				"\nEditor:", editor)
 
-	old_state, err := term.MakeRaw(int(os.Stdin.Fd()))
+	prev_state, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
 		log.Fatalf(err.Error())
 	}
+	old_state = prev_state
 	//Switch back to old state 
-	defer term.Restore(int(os.Stdin.Fd()), old_state)
 
 	//Start Stdin goroutine
 	go read_stdin()
 
-	/* Server 
+	//Start Signal Interrupt Handler
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func(){
+		for sig := range c {
+			// sig is a ^C, handle it
+			fmt.Print(sig)
+		}
+	}()
 
-    http.HandleFunc("/", handle_request)
-    log.Fatal(http.ListenAndServe(":8081", nil))
-
-	*/
 	// Create a new proxy with default certificate pair.
 	prx, _ := httpproxy.NewProxy()
 
