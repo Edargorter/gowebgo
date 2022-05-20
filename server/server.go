@@ -16,7 +16,6 @@ import (
 	"log"
 	"time"
 	"bufio"
-	"bytes"
 	"runtime"
 
 	"golang.org/x/term"
@@ -71,7 +70,8 @@ var esc = map[string]string{"reset" : "\u001b[0m",
 							"bg_white" : "\u001b[47;1m",
 							"green" : "\u001b[32m",
 							"black" : "\u001b[30m",
-							"red" : "\u001b[31m"}
+							"red" : "\u001b[31m",
+							"backspace" : "\b\033[K"}
 
 //OS commands
 var os_cmds = make(map[string] string)
@@ -406,12 +406,12 @@ func handle_request(w http.ResponseWriter, req *http.Request) {
 	//TODO handle intercept 
 }
 
-func get_n_byte_string(c byte, n int) string {
-	var nbs bytes.Buffer
+func get_n_string(s string, n int) string {
+	nstr := ""
 	for i := 0; i < n; i++ {
-		nbs.WriteByte(c)
+		nstr += s
 	}
-	return nbs.String()
+	return nstr
 }
 
 func proc_cmd(cmd string) {
@@ -505,7 +505,7 @@ func display() {
 	req_v_dist = int(math.Min(float64(req_num), float64(v_offset)))
 
 	//Separator 
-	fmt.Print(get_n_byte_string('-', win_width) + "\r\n\r\n")
+	fmt.Print(get_n_string("-", win_width) + "\r\n\r\n")
 
 	// Print previous requests
 	fmt.Print("ID\t\tName\t\tHost\t\t\tResp\t\tCode\t\tTime\r\n\r\n")
@@ -531,7 +531,7 @@ func display() {
 	}
 
 	//Separator 
-	fmt.Print("\r\n" + get_n_byte_string('-', win_width) + "\r\n\r\n")
+	fmt.Print("\r\n" + get_n_string("-", win_width) + "\r\n\r\n")
 
 	//Display options 
 	fmt.Print(usage_msg + "\r\n")
@@ -568,9 +568,13 @@ func read_stdin() {
 				fmt.Print("\b\033[K")
 			}
 
-		//SIGINT -> quit
+		//^C SIGINT -> quit
 		case 3:
 			quit(make([]string, 0))
+
+		case 0x15:
+			fmt.Print(get_n_string(esc["backspace"], len(cmd_str)))
+			cmd_str = ""
 
 		//Otherwise, add c to cmd string 
 		default:
