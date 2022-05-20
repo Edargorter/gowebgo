@@ -555,8 +555,10 @@ func read_stdin() {
 
 		//If "enter", then process command and set cmd_str to nothing 
 		case 13:
-			proc_cmd(cmd_str)
-			cmd_str = ""
+			if cmd_str != "" {
+				proc_cmd(cmd_str)
+				cmd_str = ""
+			}
 			display()
 
 		//Backspace character
