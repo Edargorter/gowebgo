@@ -2,12 +2,10 @@ package main
 
 import (
 	"os"
-	"os/signal"
 	"math"
 	"os/exec"
 	"flag"
 	"fmt"
-	//"io"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
@@ -555,6 +553,7 @@ func read_stdin() {
 
 		//If "enter", then process command and set cmd_str to nothing 
 		case 13:
+			err_str = ""
 			if cmd_str != "" {
 				proc_cmd(cmd_str)
 				cmd_str = ""
@@ -636,16 +635,6 @@ func main() {
 
 	//Start Stdin goroutine
 	go read_stdin()
-
-	//Start Signal Interrupt Handler
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	go func(){
-		for sig := range c {
-			// sig is a ^C, handle it
-			fmt.Print(sig)
-		}
-	}()
 
 	// Create a new proxy with default certificate pair.
 	prx, _ := httpproxy.NewProxy()
