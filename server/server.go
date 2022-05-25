@@ -2,7 +2,6 @@ package main
 
 import (
 	"os"
-	"math"
 	"os/exec"
 	"flag"
 	"fmt"
@@ -17,6 +16,7 @@ import (
 	"runtime"
 
 	"golang.org/x/term"
+	"golang.org/x/exp/constraints"
 	"github.com/go-httpproxy/httpproxy"
 )
 
@@ -87,6 +87,15 @@ var cmd_dict = map[string]CmdStruct{"e" : CmdStruct{display: "Edit", function: e
 									"s" : CmdStruct{display: "Send", function: send_request},
 									"d" : CmdStruct{display: "Delete", function: delete_request},
 									"q" : CmdStruct{display: "Quit", function: quit}}
+
+/* Useful funcs */
+
+func min[T constraints.Ordered](a, b T) T {
+    if a < b {
+        return a
+    }
+    return b
+}
 
 /* HTTPProxy funcs for github.com/go-httpproxy/httpproxy */
 
@@ -462,6 +471,7 @@ func display() {
 	} else {
 		win_width = width
 		win_height = height
+		v_offset = win_height - last_req_v - 14
 	}
 
 	req_num := len(req_names) + win_height - win_height
@@ -487,7 +497,7 @@ func display() {
 			if len(line) > 0 && (line[len(line)-1] == 0x0D || line[len(line)-1] == 0x0A) {
 				log.Fatalf("return/newline feed detected")
 			}
-			fmt.Printf("%s\r\n", line)
+			fmt.Printf("%s\r\n", line[:min(len(line), win_width)])
 			disp--
 			if disp == 0 {
 				break
@@ -500,7 +510,7 @@ func display() {
 	}
 
 	//Set vertical offset for previous requests 
-	req_v_dist = int(math.Min(float64(req_num), float64(v_offset)))
+	req_v_dist = min(req_num, v_offset)
 
 	//Separator 
 	fmt.Print(get_n_string("-", win_width) + "\r\n\r\n")

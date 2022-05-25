@@ -15,7 +15,7 @@ echo -en "
 echo ""
 
 #Check system software requirements 
-if [[ "$(uname)" == 'Linux' ]]; then
+if [[ "$(uname)" == 'Linux' && "$(go version)" == NULL ]]; then
 	if [ $(which apt) ]; then
 		echo "$pre Installing system requirements..."
 		sudo apt install golang-go
