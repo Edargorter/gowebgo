@@ -55,6 +55,10 @@ var editor string
 var port int
 
 //Display 
+var wsp string //white space
+var headings []string
+var heading_string string
+var spacing []int
 var req_names []string
 var reqs = make(map[string] RStruct)
 var err_str = ""
@@ -92,6 +96,13 @@ var cmd_dict = map[string]CmdStruct{"e" : CmdStruct{display: "Edit", function: e
 
 func min[T constraints.Ordered](a, b T) T {
     if a < b {
+        return a
+    }
+    return b
+}
+
+func max[T constraints.Ordered](a, b T) T {
+    if a > b {
         return a
     }
     return b
@@ -471,7 +482,7 @@ func display() {
 	} else {
 		win_width = width
 		win_height = height
-		v_offset = win_height - last_req_v - 14
+		v_offset = win_height - last_req_v - 15
 	}
 
 	req_num := len(req_names) + win_height - win_height
@@ -486,7 +497,7 @@ func display() {
 	}
 
 	//Indicate status 
-	fmt.Printf("%s %s -Gowebgo-  Port: %d | Editor: %s | Intercept: %s %s\r\n", esc["bg_white"], esc["black"], port, editor, inter_str, esc["reset"])
+	fmt.Printf("%s %s -Gowebgo-  Port: %d | Editor: %s | Intercept: %s %s\r\n\r\n", esc["bg_white"], esc["black"], port, editor, inter_str, esc["reset"])
 
 	var disp int = last_req_v
 
@@ -516,7 +527,7 @@ func display() {
 	fmt.Print(get_n_string("-", win_width) + "\r\n\r\n")
 
 	// Print previous requests
-	fmt.Print("ID\t\tName\t\tHost\t\t\tResp\t\tCode\t\tTime\r\n\r\n")
+	fmt.Print(heading_string)
 
 	var req_id int
 	var req_name string
@@ -526,10 +537,22 @@ func display() {
 			fmt.Print(esc["bg_yellow"])
 			fmt.Print(esc["black"])
 		}
-		req_id = req_num -i - 1
+
+		req_id = req_num - i - 1
 		req_name = req_names[req_id]
 		r := reqs[req_name]
-		fmt.Print(strconv.Itoa(req_id) + "\t\t" + req_name + "\t\t" + r.host + "\t\t" + strconv.FormatBool(r.data) + "\t\t" + "200" + "\t\t" + r.recv_time + "\r\n")
+
+		info_arr := []string{strconv.Itoa(req_id), req_name, r.host, strconv.FormatBool(r.data), "200", r.recv_time}
+		disp_str := ""
+
+		for i := 0; i < len(headings); i++ {
+			min_len := min(len(info_arr[i]), spacing[i] - 1)
+			disp_str += info_arr[i][:min_len] + wsp[:spacing[i] - min_len]
+		}
+
+		disp_str += "\r\n"
+		fmt.Print(disp_str)
+
 		if i == 0 {
 			fmt.Print(esc["reset"])
 		}
@@ -617,6 +640,20 @@ func main() {
 			win_height = height
 		}
 	}
+
+	//White space string
+	wsp = get_n_string(" ", 100)
+
+	//Headings and spacing
+	headings = []string{"ID", "Name", "Host", "Resp", "Code", "Time"}
+	spacing = []int{10, 20, 50, 10, 10, 10}
+
+	//Display strings
+	heading_string = ""
+	for i := 0; i < len(headings); i++ {
+		heading_string += headings[i] + wsp[:spacing[i] - len(headings[i])]
+	}
+	heading_string += "\r\n\r\n"
 
 	start_time := time.Now().Format("15:04:05")
 
