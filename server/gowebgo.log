@@ -1,0 +1,20 @@
+2022/05/26 16:42:01 ERR: Connect: TLS handshake [remote error: tls: bad certificate]
+2022/05/26 16:42:02 INFO: Proxy: GET http://detectportal.firefox.com/canonical.html 2
+2022/05/26 16:42:02 SESSION NO: 2 CONTEXT NO 1
+2022/05/26 16:42:02 ERR: Connect: TLS handshake [remote error: tls: bad certificate]
+2022/05/26 16:42:02 INFO: Proxy: GET http://detectportal.firefox.com/success.txt?ipv4 4
+2022/05/26 16:42:02 SESSION NO: 4 CONTEXT NO 1
+2022/05/26 16:42:02 INFO: Proxy: GET http://detectportal.firefox.com/success.txt?ipv6 5
+2022/05/26 16:42:02 SESSION NO: 5 CONTEXT NO 1
+2022/05/26 16:42:02 INFO: Proxy: GET http://detectportal.firefox.com/canonical.html 6
+2022/05/26 16:42:02 SESSION NO: 6 CONTEXT NO 1
+2022/05/26 16:42:02 INFO: Proxy: GET http://detectportal.firefox.com/success.txt?ipv4 7
+2022/05/26 16:42:02 SESSION NO: 7 CONTEXT NO 1
+2022/05/26 16:42:02 INFO: Proxy: GET http://detectportal.firefox.com/success.txt?ipv6 8
+2022/05/26 16:42:02 SESSION NO: 8 CONTEXT NO 1
+2022/05/26 16:42:02 INFO: Proxy: GET https://services.addons.mozilla.org:443/api/v4/addons/search/?guid=default-theme%40mozilla.org%2Cfirefox-alpenglow%40mozilla.org%2Cfirefox-compact-light%40mozilla.org%2Cfirefox-compact-dark%40mozilla.org%2Cgoogle%40search.mozilla.org%2Camazondotcom%40search.mozilla.org%2Cwikipedia%40search.mozilla.org%2Cbing%40search.mozilla.org%2Cddg%40search.mozilla.org%2Clangpack-en-CA%40firefox.mozilla.org%2Clangpack-en-GB%40firefox.mozilla.org%2Caddons-search-detection%40mozilla.com%2Cfoxyproxy%40eric.h.jung&lang=en-US 9
+2022/05/26 16:42:02 SESSION NO: 9 CONTEXT NO 1
+2022/05/26 16:42:03 INFO: Proxy: GET https://versioncheck-bg.addons.mozilla.org:443/update/VersionCheck.php?reqVersion=2&id=foxyproxy@eric.h.jung&version=7.5.1&maxAppVersion=*&status=userEnabled&appID={ec8030f7-c20a-464f-9b0e-13a3a9e97384}&appVersion=100.0&appOS=Linux&appABI=x86_64-gcc3&locale=en-ZA&currentAppVersion=100.0&updateType=112&compatMode=normal 10
+2022/05/26 16:42:03 SESSION NO: 10 CONTEXT NO 1
+2022/05/26 16:42:04 INFO: Proxy: GET https://aus5.mozilla.org:443/update/3/SystemAddons/100.0/20220428192727/Linux_x86_64-gcc3/null/release-cck-ubuntu/Linux%205.13.0-41-generic%20(GTK%203.24.20%2Clibpulse%2013.99.0)/canonical/1.0/update.xml 11
+2022/05/26 16:42:04 SESSION NO: 11 CONTEXT NO 1
