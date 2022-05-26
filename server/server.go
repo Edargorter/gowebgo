@@ -84,7 +84,8 @@ var old_state *term.State
 //Gowebgo Commands 
 var usage_msg = "Usage: <cmd> [-r req_id | request]"
 var cmd_arr = []string{"e", "r", "s", "d", "q"}
-var cmd_history []string
+var cmd_history = []string{}
+var cmd_index = 0
 var cmd_str string
 var cmd_dict = map[string]CmdStruct{"e" : CmdStruct{display: "Edit", function: edit_request},
 									"r" : CmdStruct{display: "Rename", function: rename_request},
@@ -257,7 +258,6 @@ func get_req_name(args []string) (string, bool) {
 	} else {
 		index, err := strconv.Atoi(args[0])
 		if err != nil {
-			log.Println("\n" + err.Error())
 			return "", false
 		}
 		if index >= 0 && index < len(req_names) {
@@ -269,7 +269,7 @@ func get_req_name(args []string) (string, bool) {
 
 func edit_request(args []string) bool {
 	if len(args) < 1 {
-		err_str = "Error: fewer args than expected."
+		err_str = "fewer args than expected."
 	} else {
 		req_name, found := get_req_name(args)
 		if found {
@@ -285,11 +285,11 @@ func edit_request(args []string) bool {
 					return false
 				}
 			} else {
-				err_str = fmt.Sprintf("Error: %s does not exist.", req_name)
+				err_str = fmt.Sprintf("%s does not exist.", req_name)
 				return false
 			}
 		} else {
-			err_str = "Error: request does not exist."
+			err_str = "request does not exist."
 			return false
 		}
 	}
@@ -298,7 +298,7 @@ func edit_request(args []string) bool {
 
 func delete_request(args []string) bool {
 	if len(args) < 1 {
-		err_str = "Error: fewer args than expected."
+		err_str = "fewer args than expected."
 	} else {
 		req_name, found := get_req_name(args)
 		if found {
@@ -311,11 +311,11 @@ func delete_request(args []string) bool {
 				}
 				delete(reqs, req_name)
 			} else {
-				err_str = fmt.Sprintf("Error: %s does not exist.", req_name)
+				err_str = fmt.Sprintf("%s does not exist.", req_name)
 				return false
 			}
 		} else {
-			err_str = "Error: request does not exist."
+			err_str = "request does not exist."
 			return false
 		}
 	}
@@ -324,7 +324,8 @@ func delete_request(args []string) bool {
 
 func rename_request(args []string) bool {
 	if len(args) < 2 {
-		err_str = "Error: fewer args than expected."
+		err_str = "fewer args than expected."
+		return false
 	} else {
 		req_name, found := get_req_name(args)
 		new_name := args[len(args) - 1]
@@ -339,11 +340,11 @@ func rename_request(args []string) bool {
 					}
 				}
 			} else {
-				err_str = "Error: request does not exist."
+				err_str = "request does not exist."
 				return false
 			}
 		} else {
-			err_str = fmt.Sprintf("Error: %s does not exist.", req_name)
+			err_str = fmt.Sprintf("%s does not exist.", req_name)
 			return false
 		}
 	}
@@ -356,7 +357,7 @@ func send_request(args []string) bool {
 		if req, ok := reqs[req_name]; ok {
 			r, ok := read_request_from_file(req)
 			if !ok {
-				err_str = fmt.Sprintf("Error: error reading request %s.", req_name)
+				err_str = fmt.Sprintf("error reading request %s.", req_name)
 				return false
 			}
 			fmt.Print(r)
@@ -364,22 +365,22 @@ func send_request(args []string) bool {
 			client := &http.Client{}
 			resp, err := client.Do(r)
 			if err != nil {
-				err_str = fmt.Sprintf("Error: error sending request %s.", req_name)
+				err_str = fmt.Sprintf("error sending request %s.", req_name)
 				return false
 			}
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				err_str = fmt.Sprintf("Error: error reading response to %s.", req_name)
+				err_str = fmt.Sprintf("error reading response to %s.", req_name)
 				return false
 			}
 			*/
 			fmt.Print("\r\n")
 		} else {
-			err_str = fmt.Sprintf("Error: %s does not exist.", req_name)
+			err_str = fmt.Sprintf("%s does not exist.", req_name)
 			return false
 		}
 	} else {
-		err_str = "Error: request does not exist."
+		err_str = "request does not exist."
 		return false
 	}
 	return true
@@ -389,11 +390,36 @@ func dup_request(args []string) bool {
 	req_name, found := get_req_name(args)
 	dup_name := args[len(args) - 1]
 	if !found {
-		err_str = "Error: request does not exist."
+		err_str = "request does not exist."
 		return false
 	} else {
 		req_names = append(req_names, dup_name)
 		reqs[dup_name] = reqs[req_name]
+	}
+	return true
+}
+
+func set(args []string) bool {
+	if len(args) < 2 {
+		err_str = "fewer args than expected."
+		return false
+	} else {
+		variable := args[0]
+		setting := strings.ToLower(args[1])
+		switch variable {
+		case "intercept":
+			if setting == "on" {
+				intercept = true
+			} else if setting == "off" {
+				intercept = false
+			} else {
+				err_str = "please specify 'on' or 'off'."
+				return false
+			}
+		default:
+			err_str = "nothing to set."
+			return false
+		}
 	}
 	return true
 }
@@ -433,16 +459,16 @@ func get_n_string(s string, n int) string {
 }
 
 func proc_cmd(cmd string) {
-	split := strings.Split(strings.TrimSuffix(cmd, "\n"), " ")
+	split := strings.Split(strings.TrimSuffix(cmd, "\r\n"), " ")
 	if len(split) == 0 {
-		log.Print("\nError: fewer args than expected.")
+		err_str = "fewer args than expected."
 	} else {
-		cmd_letter := split[0]
-		if c_struct, ok := cmd_dict[cmd_letter]; ok {
+		command := split[0]
+		if c_struct, ok := cmd_dict[command]; ok {
 			c_struct.function(split[1:])
 			cmd_history = append(cmd_history, cmd)
 		} else {
-			err_str = "Invalid command."
+			err_str = fmt.Sprintf("'%s' invalid command.", command)
 		}
 	}
 }
@@ -545,6 +571,7 @@ func display() {
 		info_arr := []string{strconv.Itoa(req_id), req_name, r.host, strconv.FormatBool(r.data), "200", r.recv_time}
 		disp_str := ""
 
+		//Construct request record 
 		for i := 0; i < len(headings); i++ {
 			min_len := min(len(info_arr[i]), spacing[i] - 1)
 			disp_str += info_arr[i][:min_len] + wsp[:spacing[i] - min_len]
@@ -557,9 +584,8 @@ func display() {
 			fmt.Print(esc["reset"])
 		}
 	}
-	for i := 0; i < v_offset - req_v_dist; i++ {
-		fmt.Print("\r\n")
-	}
+	//Vertical offset 
+	fmt.Print(get_n_string("\r\n", v_offset - req_v_dist))
 
 	//Separator 
 	fmt.Print("\r\n" + get_n_string("-", win_width) + "\r\n\r\n")
@@ -569,10 +595,16 @@ func display() {
 	for _, cmd_letter := range cmd_arr {
 		fmt.Print(fmt.Sprintf("%s (%v) ", cmd_dict[cmd_letter].display, cmd_letter))
 	}
-	fmt.Print("\r\n" + err_str + "\r\n> " + string(cmd_str))
+	fmt.Print("\r\n")
+	if err_str != "" {
+		fmt.Print("Error: " + err_str)
+	}
+	fmt.Print("\r\n> " + string(cmd_str))
 }
 
 func read_stdin() {
+
+	cmd_index := 0
 
 	for {
 		//Read one byte 
@@ -584,11 +616,13 @@ func read_stdin() {
 		c := cmd_buf[0]
 		switch c {
 
-		//If "enter", then process command and set cmd_str to nothing 
-		case 13:
+		//If "enter", clear error and process command and set cmd_str to nothing 
+		case 0x0d:
 			err_str = ""
 			if cmd_str != "" {
 				proc_cmd(cmd_str)
+				cmd_history = append(cmd_history, cmd_str)
+				cmd_index = len(cmd_history) - 1
 				cmd_str = ""
 			}
 			display()
@@ -597,16 +631,41 @@ func read_stdin() {
 		case 0x7f:
 			if len(cmd_str) > 0 {
 				cmd_str = cmd_str[:len(cmd_str) - 1]
-				fmt.Print("\b\033[K")
+				fmt.Print(esc["backspace"])
 			}
 
 		//^C SIGINT -> quit
-		case 3:
+		case 0x3:
 			quit(make([]string, 0))
 
+		//^U Erase line
 		case 0x15:
 			fmt.Print(get_n_string(esc["backspace"], len(cmd_str)))
 			cmd_str = ""
+
+		//^P Go back through cmd history 
+		case 0x10:
+			if cmd_index >= 0 && cmd_index < len(cmd_history) {
+				fmt.Print(get_n_string(esc["backspace"], len(cmd_str)))
+				cmd_str = cmd_history[cmd_index]
+				fmt.Print(cmd_str)
+			} else {
+				err_str = "No previous commands in buffer."
+				display()
+			}
+			cmd_index = max(0, cmd_index - 1)
+
+		//^N Go forward through cmd history 
+		case 0x0e:
+			if cmd_index >= 0 && cmd_index < len(cmd_history) {
+				fmt.Print(get_n_string(esc["backspace"], len(cmd_str)))
+				cmd_str = cmd_history[cmd_index]
+				fmt.Print(cmd_str)
+			} else {
+				err_str = "No further commands in buffer."
+				display()
+			}
+			cmd_index = min(len(cmd_history) - 1, cmd_index + 1)
 
 		//Otherwise, add c to cmd string 
 		default:
@@ -646,7 +705,7 @@ func main() {
 
 	//Headings and spacing
 	headings = []string{"ID", "Name", "Host", "Resp", "Code", "Time"}
-	spacing = []int{10, 20, 50, 10, 10, 10}
+	spacing = []int{10, 20, 30, 10, 10, 10}
 
 	//Display strings
 	heading_string = ""
@@ -654,8 +713,6 @@ func main() {
 		heading_string += headings[i] + wsp[:spacing[i] - len(headings[i])]
 	}
 	heading_string += "\r\n\r\n"
-
-	start_time := time.Now().Format("15:04:05")
 
 	flag.IntVar(&port, "p", 8081, "port number for proxy")
 	flag.StringVar(&editor, "e", "vim", "cli editor of choice")
@@ -666,13 +723,6 @@ func main() {
 	flag.BoolVar(&intercept, "i", false, "intercept requests")
 	flag.Parse()
 
-	//Display settings 
-	fmt.Println("Running:", project_name,
-				"\nOS:", host_os,
-				"\n@", start_time,
-				"\nPort:", port,
-				"\nEditor:", editor)
-
 	prev_state, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
 		log.Fatalf(err.Error())
@@ -680,6 +730,7 @@ func main() {
 	old_state = prev_state
 	//Switch back to old state 
 
+	display()
 	//Start Stdin goroutine
 	go read_stdin()
 
