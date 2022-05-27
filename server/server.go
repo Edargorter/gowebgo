@@ -66,6 +66,7 @@ var win_width = 75
 var win_height = 200
 
 //Colours. See https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html
+// Other escape sequences: https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
 var esc = map[string]string{"reset" : "\u001b[0m",
 							"bg_yellow" : "\u001b[43m",
 							"bg_blue" : "\u001b[44m",
@@ -73,7 +74,8 @@ var esc = map[string]string{"reset" : "\u001b[0m",
 							"green" : "\u001b[32m",
 							"black" : "\u001b[30m",
 							"red" : "\u001b[31m",
-							"backspace" : "\b\033[K"}
+							"backspace" : "\b\033[K",
+							"cursorleft" : "\x1b[1D"}
 
 //OS commands
 var os_cmds = make(map[string] string)
@@ -608,6 +610,7 @@ func display() {
 func read_stdin() {
 
 	cmd_index := 0
+	cursor_index := 0
 
 	for {
 		//Read one byte 
@@ -636,6 +639,15 @@ func read_stdin() {
 				cmd_str = cmd_str[:len(cmd_str) - 1]
 				fmt.Print(esc["backspace"])
 			}
+
+		//Cursor left 
+		/*
+		case 0x2:
+			if cursor_index > 0 {
+				fmt.Print(esc["cursorleft"])
+				cursor_index--
+			}
+			*/
 
 		//^C SIGINT -> quit
 		case 0x3:
@@ -670,11 +682,17 @@ func read_stdin() {
 			}
 			cmd_index = min(len(cmd_history) - 1, cmd_index + 1)
 
+		case 0x17:
+			last_space := max(strings.LastIndexByte(cmd_str, ' '), 0)
+			fmt.Print(get_n_string(esc["backspace"], len(cmd_str) - last_space))
+			cmd_str = cmd_str[:last_space]
+
 		//Otherwise, add c to cmd string 
 		default:
 			char := string(cmd_buf[0])
 			//Print to stdout 
 			fmt.Print(char)
+			cursor_index++
 			cmd_str += char
 		}
 	}

@@ -18,3 +18,97 @@
 2022/05/26 16:42:03 SESSION NO: 10 CONTEXT NO 1
 2022/05/26 16:42:04 INFO: Proxy: GET https://aus5.mozilla.org:443/update/3/SystemAddons/100.0/20220428192727/Linux_x86_64-gcc3/null/release-cck-ubuntu/Linux%205.13.0-41-generic%20(GTK%203.24.20%2Clibpulse%2013.99.0)/canonical/1.0/update.xml 11
 2022/05/26 16:42:04 SESSION NO: 11 CONTEXT NO 1
+2022/05/27 11:45:02 INFO: Proxy: GET https://firefox.settings.services.mozilla.com:443/v1/buckets/main/collections/ms-language-packs/records/cfr-v1-en-US 2
+2022/05/27 11:45:02 SESSION NO: 2 CONTEXT NO 1
+2022/05/27 11:45:02 INFO: Proxy: POST http://ocsp.pki.goog/gts1c3 3
+2022/05/27 11:45:02 SESSION NO: 3 CONTEXT NO 1
+2022/05/27 11:45:02 INFO: Proxy: POST https://incoming.telemetry.mozilla.org:443/submit/messaging-system/undesired-events/1/5807f23f-d2b9-49c7-a762-e9123c77c12b 4
+2022/05/27 11:45:02 SESSION NO: 4 CONTEXT NO 1
+2022/05/27 11:45:02 INFO: Proxy: POST https://incoming.telemetry.mozilla.org:443/submit/firefox-desktop/baseline/1/84857481-6572-4121-bec3-026031b71258 5
+2022/05/27 11:45:02 SESSION NO: 5 CONTEXT NO 1
+2022/05/27 11:45:03 INFO: Proxy: POST http://ocsp.digicert.com/ 6
+2022/05/27 11:45:03 SESSION NO: 6 CONTEXT NO 1
+2022/05/27 11:45:03 INFO: Proxy: POST https://incoming.telemetry.mozilla.org:443/submit/firefox-desktop/baseline/1/971b8eed-fb53-49d5-8cb9-9cc747042989 7
+2022/05/27 11:45:03 SESSION NO: 7 CONTEXT NO 1
+2022/05/27 11:45:03 INFO: Proxy: GET https://firefox.settings.services.mozilla.com:443/v1/buckets/monitor/collections/changes/changeset?_expected=%221653641845675%22 8
+2022/05/27 11:45:03 SESSION NO: 8 CONTEXT NO 1
+2022/05/27 11:45:03 INFO: Proxy: GET https://firefox.settings.services.mozilla.com:443/v1/buckets/blocklists/collections/addons-bloomfilters/changeset?_expected=1653525469455&_since=%221652294280350%22 8
+2022/05/27 11:45:03 SESSION NO: 8 CONTEXT NO 2
+2022/05/27 11:45:04 INFO: Proxy: GET https://firefox.settings.services.mozilla.com:443/v1/buckets/main/collections/normandy-recipes-capabilities/changeset?_expected=1653609666767&_since=%221653436865075%22 8
+2022/05/27 11:45:04 SESSION NO: 8 CONTEXT NO 3
+2022/05/27 11:45:04 INFO: Proxy: GET https://firefox.settings.services.mozilla.com:443/v1/buckets/main/collections/cfr/changeset?_expected=1653578606314&_since=%221652978742098%22 8
+2022/05/27 11:45:04 SESSION NO: 8 CONTEXT NO 4
+2022/05/27 11:45:04 INFO: Proxy: GET https://firefox.settings.services.mozilla.com:443/v1/buckets/main/collections/devtools-compatibility-browsers/changeset?_expected=1653491615318&_since=%221651179345959%22 8
+2022/05/27 11:45:04 SESSION NO: 8 CONTEXT NO 5
+2022/05/27 11:45:05 INFO: Proxy: POST https://shavar.services.mozilla.com:443/downloads?client=navclient-auto-ffox&appver=100.0&pver=2.2 9
+2022/05/27 11:45:05 SESSION NO: 9 CONTEXT NO 1
+2022/05/27 11:45:05 INFO: Proxy: GET https://id.google.com:443/verify/AHGvNozeE4FXmrVriGf6l2bF3Z7e0k9i01Ix35IagDD9UpoqWBWwAFEYgbcUVgIPt86ugA4IztYwYjsroJEpcJbjRr2uqt0CEMujv4TZwFRD1g 10
+2022/05/27 11:45:05 SESSION NO: 10 CONTEXT NO 1
+2022/05/27 11:45:06 INFO: Proxy: POST https://www.google.com:443/gen_204?s=web&t=aft&atyp=csi&ei=xY-PYvb9AfS58gLVnaqYCA&rt=wsrt.13,aft.340,afti.340,prt.148,sct.12&wh=968&imn=24&ima=14&imad=13&aftp=968&bb=1&bl=uqUL 11
+2022/05/27 11:45:06 SESSION NO: 11 CONTEXT NO 1
+2022/05/27 11:45:06 INFO: Proxy: GET https://www.google.com:443/gen_204?atyp=i&ct=backbutton&cad=&tt=navigation&ei=xY-PYvb9AfS58gLVnaqYCA&trs=0&nt=back_forward&zx=1653644706223 12
+2022/05/27 11:45:06 SESSION NO: 12 CONTEXT NO 1
+2022/05/27 11:45:06 INFO: Proxy: GET https://www.google.com:443/complete/search?q=fugue&cp=0&client=desktop-gws-wiz-on-focus-serp&xssi=t&hl=en-ZA&authuser=0&pq=fugue&psi=xY-PYvb9AfS58gLVnaqYCA.1653644706366&ofp=GLbDkdaoq6mJDxjeprjWm_r8m6YBGP776qSz0cikIBit94CUgrq0k-sBGIrH7uWogYaZPBABMpUBCg0KC2Z1Z3VlIHN0YXRlChUKE2Z1Z3VlIHByb251bmNpYXRpb24KDQoLZnVndWUgbXVzaWMKFAoSZGlzc29jaWF0aXZlIGZ1Z3VlCg8KDWZ1Z3VlIGV4YW1wbGUKDwoNZnVndWUgYmFyb3F1ZQoTChFmdWd1ZSB3aGF0IHBlcmlvZAoPCg1mdWd1ZSBzeW5vbnltEEcyfwoYChZXaGF0IGlzIGEgZnVndWUgc3RhdGU_CiAKHldoYXQgaXMgYW4gZXhhbXBsZSBvZiBhIGZ1Z3VlPwogCh5XaGF0IGlzIGEgZnVndWUgaW4gcHN5Y2hpYXRyeT8KHAoaV2hhdCBkb2VzIGZ1Z3VlIGxpa2UgbWVhbj8Q5AI&dpr=1 14
+2022/05/27 11:45:06 SESSION NO: 14 CONTEXT NO 1
+2022/05/27 11:45:06 INFO: Proxy: GET https://www.google.com:443/complete/search?q&cp=0&client=gws-wiz&xssi=t&hl=en-ZA&authuser=0&pq=fugue&psi=xY-PYvb9AfS58gLVnaqYCA.1653644706366&ofp=GLbDkdaoq6mJDxjeprjWm_r8m6YBGP776qSz0cikIBit94CUgrq0k-sBGIrH7uWogYaZPA&nolsbt=1&dpr=1 14
+2022/05/27 11:45:06 SESSION NO: 14 CONTEXT NO 1
+2022/05/27 11:45:06 INFO: Proxy: POST https://www.google.com:443/gen_204?atyp=i&bb=1&ei=xY-PYvb9AfS58gLVnaqYCA&ct=slh&v=t1&m=HV&pv=0.43211568120788846&me=1:1653644705801,V,0,0,940,968:0,B,3273:0,N,1,xY-PYvb9AfS58gLVnaqYCA:0,R,1,8,24,36,92,33:0,R,1,CAIQAw,79,85,86,44:0,R,1,CAIQBA,166,85,89,44:0,R,1,CAIQBQ,257,85,78,44:0,R,1,CAIQBg,337,85,82,44:0,R,1,CAIQMg,28,182,652,2533:0,R,1,CAgQAA,28,182,652,408:0,R,1,CAgQAg,12,182,684,78:0,R,1,CAgQAw,28,224,652,20:0,R,1,CAgQBg,12,260,684,38:0,R,1,CAgQCA,28,318,652,219:0,R,1,CBQQAA,28,634,652,228:0,R,1,CBUQAQ,28,671,652,43:0,R,1,CBYQAQ,28,715,652,43:0,R,1,CBcQAQ,28,759,652,43:0,R,1,CBgQAQ,28,803,652,43:0,R,1,CAUQAA,28,906,652,235:0,R,1,CAYQAA,28,906,600,121:0,R,1,CAEQAA,724,176,369,2979:0,R,1,CHEQAA,725,182,368,776:0,R,1,CFUQAA,726,183,366,186:0,R,1,CFQQAA,726,183,366,186:0,R,1,CEsQAA,726,183,366,186:0,R,1,CEsQAQ,726,183,366,186:0,R,1,CEwQAA,726,183,366,186:0,R,1,CFYQAA,726,367,366,90:0,R,1,CFcQAA,726,379,366,66:0,R,1,CHEQAw,726,471,366,450:0,R,1,CFkQAA,726,471,366,450:0,R,1,CG0QAA,726,471,366,301:0,R,1,CGwQAA,726,471,366,301:0,R,1,CFoQAA,726,471,366,111:0,R,1,CFoQAQ,741,471,336,111:0,R,1,CFwQAA,726,595,366,44:0,R,1,CFwQAQ,742,596,310,43:0,R,1,CGAQAA,726,639,366,44:0,R,1,CGAQAQ,742,640,310,43:0,R,1,CGQQAA,726,683,366,44:0,R,1,CGQQAQ,742,684,310,43:0,R,1,CGgQAA,726,727,366,44:0,R,1,CGgQAQ,742,728,310,43:0,R,1,CHAQAA,726,796,366,125:0,R,1,CG8QAA,726,796,366,125:0,R,1,CG4QAw,726,820,366,101:534,x:121,T:0,R,1,8,24,36,92,33:0,R,1,CAIQAw,79,85,86,44:0,R,1,CAIQBA,166,85,89,44:0,R,1,CAIQBQ,257,85,78,44:0,R,1,CAIQBg,337,85,82,44:0,R,1,CAIQMg,28,182,652,2533:0,R,1,CAgQAA,28,182,652,408:0,R,1,CAgQAg,12,182,684,78:0,R,1,CAgQAw,28,224,652,20:0,R,1,CAgQBg,12,260,684,38:0,R,1,CAgQCA,28,318,652,219:0,R,1,CAgQGQ,28,537,652,71:0,R,1,CAgQGw,28,557,652,170:0,R,1,CBQQAA,28,634,652,228:0,R,1,CBUQAQ,28,671,652,43:0,R,1,CBYQAQ,28,715,652,43:0,R,1,CBcQAQ,28,759,652,43:0,R,1,CBgQAQ,28,803,652,43:0,R,1,CAUQAA,28,906,652,235&zx=1653644706471 15
+2022/05/27 11:45:06 SESSION NO: 15 CONTEXT NO 1
+2022/05/27 11:45:06 INFO: Proxy: POST https://www.google.com:443/gen_204?atyp=i&bb=1&ei=xY-PYvb9AfS58gLVnaqYCA&ct=slh&v=t1&pv=0.43211568120788846&me=69:1653644706456,R,1,CAYQAA,28,906,600,121:0,R,1,CAEQAA,724,176,369,2979:0,R,1,CHEQAA,725,182,368,776:0,R,1,CFUQAA,726,183,366,186:0,R,1,CFQQAA,726,183,366,186:0,R,1,CEsQAA,726,183,366,186:0,R,1,CEsQAQ,726,183,366,186:0,R,1,CEwQAA,726,183,366,186:0,R,1,CFYQAA,726,367,366,90:0,R,1,CFcQAA,726,379,366,66:0,R,1,CHEQAw,726,471,366,450:0,R,1,CFkQAA,726,471,366,450:0,R,1,CG0QAA,726,471,366,301:0,R,1,CGwQAA,726,471,366,301:0,R,1,CFoQAA,726,471,366,111:0,R,1,CFoQAQ,741,471,336,111:0,R,1,CFwQAA,726,595,366,44:0,R,1,CFwQAQ,742,596,310,43:0,R,1,CGAQAA,726,639,366,44:0,R,1,CGAQAQ,742,640,310,43:0,R,1,CGQQAA,726,683,366,44:0,R,1,CGQQAQ,742,684,310,43:0,R,1,CGgQAA,726,727,366,44:0,R,1,CGgQAQ,742,728,310,43:0,R,1,CHAQAA,726,796,366,125:0,R,1,CG8QAA,726,796,366,125:0,R,1,CG4QAw,726,820,366,101:22,T:0,R,1,8,24,36,92,33:0,R,1,CAIQAw,79,85,86,44:0,R,1,CAIQBA,166,85,89,44:0,R,1,CAIQBQ,257,85,78,44:0,R,1,CAIQBg,337,85,82,44:0,R,1,CAIQMg,28,182,652,2533:0,R,1,CAgQAA,28,182,652,408:0,R,1,CAgQAg,12,182,684,78:0,R,1,CAgQAw,28,224,652,20:0,R,1,CAgQBg,12,260,684,38:0,R,1,CAgQCA,28,318,652,219:0,R,1,CAgQGQ,28,537,652,71:0,R,1,CAgQGw,28,557,652,170:0,R,1,CBQQAA,28,634,652,228:0,R,1,CBUQAQ,28,671,652,43:0,R,1,CBYQAQ,28,715,652,43:0,R,1,CBcQAQ,28,759,652,43:0,R,1,CBgQAQ,28,803,652,43:0,R,1,CAUQAA,28,906,652,235:0,R,1,CAYQAA,28,906,600,121:0,R,1,CAEQAA,724,176,369,2979:0,R,1,CHEQAA,725,182,368,776:0,R,1,CFUQAA,726,183,366,186:0,R,1,CFQQAA,726,183,366,186:0,R,1,CEsQAA,726,183,366,186:0,R,1,CEsQAQ,726,183,366,186:0,R,1,CEwQAA,726,183,366,186:0,R,1,CFYQAA,726,367,366,90:0,R,1,CFcQAA,726,379,366,66:0,R,1,CHEQAw,726,471,366,450:0,R,1,CFkQAA,726,471,366,450:0,R,1,CG0QAA,726,471,366,301:0,R,1,CGwQAA,726,471,366,301:0,R,1,CFoQAA,726,471,366,111:0,R,1,CFoQAQ,741,471,336,111:0,R,1,CFwQAA,726,595,366,44:0,R,1,CFwQAQ,742,596,310,43&zx=1653644706497 16
+2022/05/27 11:45:06 SESSION NO: 16 CONTEXT NO 1
+2022/05/27 11:45:06 INFO: Proxy: POST https://www.google.com:443/gen_204?atyp=i&bb=1&ei=xY-PYvb9AfS58gLVnaqYCA&ct=kptm:il&iw=940&ih=968&r=0&sh=1080&sw=1920&tmw=368&tmh=186&nvi=5&eg=0&zx=1653644706648 17
+2022/05/27 11:45:06 SESSION NO: 17 CONTEXT NO 1
+2022/05/27 11:45:06 INFO: Proxy: POST https://www.google.com:443/gen_204?atyp=i&bb=1&ei=xY-PYvb9AfS58gLVnaqYCA&dt19=3&zx=1653644706709 17
+2022/05/27 11:45:06 SESSION NO: 17 CONTEXT NO 2
+2022/05/27 11:45:06 INFO: Proxy: GET https://safebrowsing.googleapis.com:443/v4/fullHashes:find?$ct=application/x-protobuf&key=AIzaSyAeBuGRUrxHr4_eHhrCwdkl0G-O4qR5UXs&$httpMethod=POST&$req=ChUKE25hdmNsaWVudC1hdXRvLWZmb3gSGwoNCAUQBhgBIgMwMDEwARDN7g0aAhgK95RGXRouCAUQAhoGCgTY2OLTGgYKBDhOAbUaBgoESKW1GhoGCgRje7pQGgYKBI4dv5UgAQ== 18
+2022/05/27 11:45:06 SESSION NO: 18 CONTEXT NO 1
+2022/05/27 11:45:06 INFO: Proxy: POST https://www.google.com:443/gen_204?atyp=csi&bb=1&ei=xY-PYvb9AfS58gLVnaqYCA&s=web&t=all&bl=uqUL&wh=968&imn=24&ima=14&imad=13&aftp=968&adh=tv.6&ime=1&imex=1&imeh=5&imea=0&imeb=3&imel=0&scp=0&fld=1169&sto=&sys=hc.8&rt=sct.12,aft.340,prt.148,dcl.235,afti.340,aftqf.341,xjsls.371,xjses.560,xjsee.628,xjs.628,ol.1198,fcp.218,wsrt.13,cst.0,dnst.0,rqst.0,rspt.0,sslt.0,rqstt.-65,unt.-65,cstt.-65,dit.211&zx=1653644706854 19
+2022/05/27 11:45:06 SESSION NO: 19 CONTEXT NO 1
+2022/05/27 11:45:06 INFO: Proxy: GET https://www.google.com:443/gen_204?atyp=i&ct=psnt&cad=&nt=back_forward&ei=xY-PYvb9AfS58gLVnaqYCA&zx=1653644706874 20
+2022/05/27 11:45:06 SESSION NO: 20 CONTEXT NO 1
+2022/05/27 11:45:07 INFO: Proxy: GET https://www.google.com:443/js/bg/yCybRfD6Vn7INKfCRC0On748ZARO3mR_Ih32yM6Mlsw.js 20
+2022/05/27 11:45:07 SESSION NO: 20 CONTEXT NO 2
+2022/05/27 11:45:09 INFO: Proxy: POST https://www.google.com:443/gen_204?atyp=i&bb=1&ei=xY-PYvb9AfS58gLVnaqYCA&ct=slh&v=t1&pv=0.43211568120788846&me=134:1653644706478,R,1,CGAQAA,726,639,366,44:0,R,1,CGAQAQ,742,640,310,43:0,R,1,CGQQAA,726,683,366,44:0,R,1,CGQQAQ,742,684,310,43:0,R,1,CGgQAA,726,727,366,44:0,R,1,CGgQAQ,742,728,310,43:0,R,1,CHAQAA,726,796,366,125:0,R,1,CG8QAA,726,796,366,125:0,R,1,CG4QAw,726,820,366,101:1837,h,1,CAgQCA,o:0,h,1,CAgQAA,o:0,h,1,CAIQMg,o:1079,e,B&zx=1653644709395 21
+2022/05/27 11:45:09 SESSION NO: 21 CONTEXT NO 1
+2022/05/27 11:45:32 INFO: Proxy: GET https://normandy.cdn.mozilla.net:443/api/v1/ 22
+2022/05/27 11:45:32 SESSION NO: 22 CONTEXT NO 1
+2022/05/27 11:45:32 INFO: Proxy: GET https://classify-client.services.mozilla.com:443/api/v1/classify_client/ 23
+2022/05/27 11:45:32 SESSION NO: 23 CONTEXT NO 1
+2022/05/27 11:46:01 INFO: Proxy: GET http://detectportal.firefox.com/canonical.html 24
+2022/05/27 11:46:01 SESSION NO: 24 CONTEXT NO 1
+2022/05/27 11:46:01 INFO: Proxy: GET http://detectportal.firefox.com/success.txt?ipv4 25
+2022/05/27 11:46:01 SESSION NO: 25 CONTEXT NO 1
+2022/05/27 11:46:01 INFO: Proxy: GET http://detectportal.firefox.com/success.txt?ipv6 26
+2022/05/27 11:46:01 SESSION NO: 26 CONTEXT NO 1
+2022/05/27 11:47:31 INFO: Proxy: GET https://firefox.settings.services.mozilla.com:443/v1/buckets/monitor/collections/changes/changeset?_expected=0 27
+2022/05/27 11:47:31 SESSION NO: 27 CONTEXT NO 1
+2022/05/27 11:47:31 INFO: Proxy: GET https://firefox.settings.services.mozilla.com:443/v1/buckets/security-state/collections/intermediates/changeset?_expected=1653641845675&_since=%221653404236699%22 27
+2022/05/27 11:47:31 SESSION NO: 27 CONTEXT NO 2
+2022/05/27 11:47:31 INFO: Proxy: GET https://content-signature-2.cdn.mozilla.net:443/chains/onecrl.content-signature.mozilla.org-2022-06-30-19-51-36.chain 28
+2022/05/27 11:47:31 SESSION NO: 28 CONTEXT NO 1
+2022/05/27 11:47:32 INFO: Proxy: GET https://firefox.settings.services.mozilla.com:443/v1/buckets/security-state/collections/cert-revocations/changeset?_expected=1653641844398&_since=%221653469036352%22 29
+2022/05/27 11:47:32 SESSION NO: 29 CONTEXT NO 1
+2022/05/27 11:47:32 INFO: Proxy: GET https://firefox.settings.services.mozilla.com:443/v1/ 31
+2022/05/27 11:47:32 SESSION NO: 31 CONTEXT NO 1
+2022/05/27 11:47:32 INFO: Proxy: GET https://firefox.settings.services.mozilla.com:443/v1/ 31
+2022/05/27 11:47:32 SESSION NO: 31 CONTEXT NO 1
+2022/05/27 11:47:32 INFO: Proxy: GET https://firefox-settings-attachments.cdn.mozilla.net:443/security-state-staging/intermediates/590b331b-c3f1-4028-8b4b-57763d4e8493.pem 33
+2022/05/27 11:47:32 SESSION NO: 33 CONTEXT NO 1
+2022/05/27 11:47:32 INFO: Proxy: GET https://firefox-settings-attachments.cdn.mozilla.net:443/security-state-staging/intermediates/8a832b56-3f0a-4b5f-8966-8a1da5242863.pem 33
+2022/05/27 11:47:32 SESSION NO: 33 CONTEXT NO 1
+2022/05/27 11:49:11 INFO: Proxy: POST https://incoming.telemetry.mozilla.org:443/submit/telemetry/a9e3dabe-6f6c-44e1-95b1-ba353eb97760/main/Firefox/100.0/release/20220428192727?v=4 34
+2022/05/27 11:49:11 SESSION NO: 34 CONTEXT NO 1
+2022/05/27 11:50:02 INFO: Proxy: GET https://contile.services.mozilla.com:443/v1/tiles 35
+2022/05/27 11:50:02 SESSION NO: 35 CONTEXT NO 1
+2022/05/27 11:51:31 INFO: Proxy: GET https://normandy.cdn.mozilla.net:443/api/v1/ 36
+2022/05/27 11:51:31 SESSION NO: 36 CONTEXT NO 1
+2022/05/27 11:51:31 INFO: Proxy: GET https://classify-client.services.mozilla.com:443/api/v1/classify_client/ 37
+2022/05/27 11:51:31 SESSION NO: 37 CONTEXT NO 1
+2022/05/27 12:05:02 INFO: Proxy: GET https://contile.services.mozilla.com:443/v1/tiles 1
+2022/05/27 12:05:02 SESSION NO: 1 CONTEXT NO 1
+2022/05/27 12:14:51 INFO: Proxy: GET https://safebrowsing.googleapis.com:443/v4/threatListUpdates:fetch?$ct=application/x-protobuf&key=AIzaSyAeBuGRUrxHr4_eHhrCwdkl0G-O4qR5UXs&$httpMethod=POST&$req=ChUKE25hdmNsaWVudC1hdXRvLWZmb3gaJwgFEAIaGwoNCAUQBhgBIgMwMDEwARDN7g0aAhgK95RGXSICIAIoARonCAEQAhobCg0IARAGGAEiAzAwMTABEIfeChoCGAr1VeX5IgIgAigBGicIAxACGhsKDQgDEAYYASIDMDAxMAEQrK4KGgIYCqULiawiAiACKAEaJwgHEAIaGwoNCAcQBhgBIgMwMDEwARCsoQsaAhgKKL5WWyICIAIoARolCAkQAhoZCg0ICRAGGAEiAzAwMTABECAaAhgKjN59RCICIAIoAQ== 2
+2022/05/27 12:14:51 SESSION NO: 2 CONTEXT NO 1
+2022/05/27 12:20:01 INFO: Proxy: GET https://contile.services.mozilla.com:443/v1/tiles 3
+2022/05/27 12:20:01 SESSION NO: 3 CONTEXT NO 1
+2022/05/27 12:35:01 INFO: Proxy: GET https://contile.services.mozilla.com:443/v1/tiles 4
+2022/05/27 12:35:01 SESSION NO: 4 CONTEXT NO 1
