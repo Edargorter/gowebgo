@@ -20,7 +20,7 @@ gowebgo
 
 # Requests
 server/requests/*
-**/logs
+server/*.log
 !server/requests/.gitkeep
 
 # VIM Swap
