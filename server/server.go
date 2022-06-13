@@ -47,6 +47,8 @@ var intercept = false
 var v_offset = 17
 var last_req_v = 17
 var cmd_mode = true
+var cmd_index = 0
+var cursor_index = 0
 
 var username string
 var password string
@@ -93,7 +95,6 @@ var log_file string
 var usage_msg = "Usage: <cmd> [-r req_id | request]"
 var cmd_arr = []string{"e", "r", "s", "d", "q"}
 var cmd_history = []string{}
-var cmd_index = 0
 var cmd_str string
 var cmd_dict = map[string]CmdStruct{"e" : CmdStruct{display: "Edit", function: edit_request},
 									"r" : CmdStruct{display: "Rename", function: rename_request},
@@ -611,15 +612,92 @@ func display() {
 }
 
 func interface_cmd(c byte){
-	
+	switch c  {
+
+	//Disable cmd mode
+	case 'i':
+		cmd_mode = false
+
+	default:
+		err_str = "Cmd mode on"
+		display()
+	}
 }
 
 func request_cmd(c byte){
+	switch c {
+
+	//If "enter", clear error and process command and set cmd_str to nothing 
+	case 0x0d:
+		err_str = ""
+		if cmd_str != "" {
+			proc_cmd(cmd_str)
+			cmd_history = append(cmd_history, cmd_str)
+			cmd_index = len(cmd_history) - 1
+			cmd_str = ""
+		}
+		display()
+
+	//Backspace character
+	case 0x7f:
+		if len(cmd_str) > 0 {
+			cmd_str = cmd_str[:len(cmd_str) - 1]
+			fmt.Print(esc["backspace"])
+		}
+
+	case 0x0e:
+		if cmd_index >= 0 && cmd_index < len(cmd_history) {
+			fmt.Print(get_n_string(esc["backspace"], len(cmd_str)))
+			cmd_str = cmd_history[cmd_index]
+			fmt.Print(cmd_str)
+		} else {
+			err_str = "No further commands in buffer."
+			display()
+		}
+		cmd_index = min(len(cmd_history) - 1, cmd_index + 1)
+
+	//^P Go back through cmd history 
+	case 0x10:
+		if cmd_index >= 0 && cmd_index < len(cmd_history) {
+			fmt.Print(get_n_string(esc["backspace"], len(cmd_str)))
+			cmd_str = cmd_history[cmd_index]
+			fmt.Print(cmd_str)
+		} else {
+			err_str = "No previous commands in buffer."
+			display()
+		}
+		cmd_index = max(0, cmd_index - 1)
+
+	//^U Erase line
+	case 0x15:
+		fmt.Print(get_n_string(esc["backspace"], len(cmd_str)))
+		cmd_str = ""
+
+	//Enable command mode 
+	case 0x1b:
+		cmd_mode = true
+
+	//^C SIGINT -> quit
+	case 0x3:
+		quit(make([]string, 0))
+
+	case 0x17:
+		last_space := max(strings.LastIndexByte(cmd_str, ' '), 0)
+		fmt.Print(get_n_string(esc["backspace"], len(cmd_str) - last_space))
+		cmd_str = cmd_str[:last_space]
+
+	//Otherwise, add c to cmd string 
+	default:
+		char := string(c)
+		//Print to stdout 
+		fmt.Print(char)
+		cursor_index++
+		cmd_str += char
+	}
+}
 
 func read_stdin() {
 
-	cmd_index := 0
-	cursor_index := 0
 
 	for {
 		//Read one byte 
@@ -632,83 +710,7 @@ func read_stdin() {
 		if cmd_mode {
 			interface_cmd(c)
 		} else {
-		switch c {
-
-		//If "enter", clear error and process command and set cmd_str to nothing 
-		case 0x0d:
-			err_str = ""
-			if cmd_str != "" {
-				proc_cmd(cmd_str)
-				cmd_history = append(cmd_history, cmd_str)
-				cmd_index = len(cmd_history) - 1
-				cmd_str = ""
-			}
-			display()
-
-		//Backspace character
-		case 0x7f:
-			if len(cmd_str) > 0 {
-				cmd_str = cmd_str[:len(cmd_str) - 1]
-				fmt.Print(esc["backspace"])
-			}
-
-		//^C SIGINT -> quit
-		case 0x3:
-			quit(make([]string, 0))
-
-		//^U Erase line
-		case 0x15:
-			fmt.Print(get_n_string(esc["backspace"], len(cmd_str)))
-			cmd_str = ""
-
-		//^N Go forward through cmd history 
-		case 0x0e:
-			if cmd_index >= 0 && cmd_index < len(cmd_history) {
-				fmt.Print(get_n_string(esc["backspace"], len(cmd_str)))
-				cmd_str = cmd_history[cmd_index]
-				fmt.Print(cmd_str)
-			} else {
-				err_str = "No further commands in buffer."
-				display()
-			}
-			cmd_index = min(len(cmd_history) - 1, cmd_index + 1)
-
-		//^P Go back through cmd history 
-		case 0x10:
-			if cmd_index >= 0 && cmd_index < len(cmd_history) {
-				fmt.Print(get_n_string(esc["backspace"], len(cmd_str)))
-				cmd_str = cmd_history[cmd_index]
-				fmt.Print(cmd_str)
-			} else {
-				err_str = "No previous commands in buffer."
-				display()
-			}
-			cmd_index = max(0, cmd_index - 1)
-
-		//^U Erase line
-		case 0x15:
-			fmt.Print(get_n_string(esc["backspace"], len(cmd_str)))
-			cmd_str = ""
-
-		case 0x1b:
-			mode = 1
-
-		//^C SIGINT -> quit
-		case 0x3:
-			quit(make([]string, 0))
-
-		case 0x17:
-			last_space := max(strings.LastIndexByte(cmd_str, ' '), 0)
-			fmt.Print(get_n_string(esc["backspace"], len(cmd_str) - last_space))
-			cmd_str = cmd_str[:last_space]
-
-		//Otherwise, add c to cmd string 
-		default:
-			char := string(c)
-			//Print to stdout 
-			fmt.Print(char)
-			cursor_index++
-			cmd_str += char
+			request_cmd(c)
 		}
 	}
 }
