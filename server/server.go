@@ -25,6 +25,7 @@ type RStruct struct {
 	req_filename string
 	resp_filename string
 	recv_time string
+	resp_code int
 	host string
 	data bool
 }
@@ -45,6 +46,8 @@ const (
 var intercept = false
 var v_offset = 17
 var last_req_v = 17
+var cmd_mode = true
+
 var username string
 var password string
 var cert_file string
@@ -602,6 +605,12 @@ func display() {
 	fmt.Print("\r\n> " + string(cmd_str))
 }
 
+func interface_cmd(c byte){
+	
+}
+
+func request_cmd(c byte){
+
 func read_stdin() {
 
 	cmd_index := 0
@@ -614,6 +623,9 @@ func read_stdin() {
 			return
 		}
 		c := cmd_buf[0]
+		if cmd_mode {
+			interface_cmd(c)
+		} else {
 		switch c {
 
 		//If "enter", clear error and process command and set cmd_str to nothing 
@@ -634,14 +646,17 @@ func read_stdin() {
 				fmt.Print(esc["backspace"])
 			}
 
-		//^C SIGINT -> quit
-		case 0x3:
-			quit(make([]string, 0))
-
-		//^U Erase line
-		case 0x15:
-			fmt.Print(get_n_string(esc["backspace"], len(cmd_str)))
-			cmd_str = ""
+		//^N Go forward through cmd history 
+		case 0x0e:
+			if cmd_index >= 0 && cmd_index < len(cmd_history) {
+				fmt.Print(get_n_string(esc["backspace"], len(cmd_str)))
+				cmd_str = cmd_history[cmd_index]
+				fmt.Print(cmd_str)
+			} else {
+				err_str = "No further commands in buffer."
+				display()
+			}
+			cmd_index = min(len(cmd_history) - 1, cmd_index + 1)
 
 		//^P Go back through cmd history 
 		case 0x10:
@@ -655,17 +670,17 @@ func read_stdin() {
 			}
 			cmd_index = max(0, cmd_index - 1)
 
-		//^N Go forward through cmd history 
-		case 0x0e:
-			if cmd_index >= 0 && cmd_index < len(cmd_history) {
-				fmt.Print(get_n_string(esc["backspace"], len(cmd_str)))
-				cmd_str = cmd_history[cmd_index]
-				fmt.Print(cmd_str)
-			} else {
-				err_str = "No further commands in buffer."
-				display()
-			}
-			cmd_index = min(len(cmd_history) - 1, cmd_index + 1)
+		//^U Erase line
+		case 0x15:
+			fmt.Print(get_n_string(esc["backspace"], len(cmd_str)))
+			cmd_str = ""
+
+		case 0x1b:
+			mode = 1
+
+		//^C SIGINT -> quit
+		case 0x3:
+			quit(make([]string, 0))
 
 		//Otherwise, add c to cmd string 
 		default:
