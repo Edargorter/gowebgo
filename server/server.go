@@ -69,6 +69,7 @@ var win_width = 75
 var win_height = 200
 
 //Colours. See https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html
+// Other escape sequences: https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
 var esc = map[string]string{"reset" : "\u001b[0m",
 							"bg_yellow" : "\u001b[43m",
 							"bg_blue" : "\u001b[44m",
@@ -76,13 +77,17 @@ var esc = map[string]string{"reset" : "\u001b[0m",
 							"green" : "\u001b[32m",
 							"black" : "\u001b[30m",
 							"red" : "\u001b[31m",
-							"backspace" : "\b\033[K"}
+							"backspace" : "\b\033[K",
+							"cursorleft" : "\x1b[1D"}
 
 //OS commands
 var os_cmds = make(map[string] string)
 //Cmd input buffer
 var cmd_buf = make([]byte, 1)
 var old_state *term.State
+
+//Logging file
+var log_file string
 
 //Gowebgo Commands 
 var usage_msg = "Usage: <cmd> [-r req_id | request]"
@@ -154,8 +159,8 @@ func OnConnect(ctx *httpproxy.Context, host string) (ConnectAction httpproxy.Con
 
 func OnRequest(ctx *httpproxy.Context, req *http.Request) (resp *http.Response) {
 	// Log proxying requests.
-	//log.Printf("INFO: Proxy: %s %s %d", req.Method, req.URL.String(), ctx.Prx.SessionNo)
-	//log.Printf("SESSION NO: %d CONTEXT NO %d", ctx.Prx.SessionNo, ctx.SubSessionNo)
+	log.Printf("INFO: Proxy: %s %s %d", req.Method, req.URL.String(), ctx.Prx.SessionNo)
+	log.Printf("SESSION NO: %d CONTEXT NO %d", ctx.Prx.SessionNo, ctx.SubSessionNo)
 	recv_time := time.Now().Format("15:04:05")
 	//fmt.Fprintf(w, "Hello, %q", html.EscapeString(req.URL.Path))
 	req_dump, err := httputil.DumpRequest(req, true)
@@ -614,6 +619,7 @@ func request_cmd(c byte){
 func read_stdin() {
 
 	cmd_index := 0
+	cursor_index := 0
 
 	for {
 		//Read one byte 
@@ -645,6 +651,15 @@ func read_stdin() {
 				cmd_str = cmd_str[:len(cmd_str) - 1]
 				fmt.Print(esc["backspace"])
 			}
+
+		//^C SIGINT -> quit
+		case 0x3:
+			quit(make([]string, 0))
+
+		//^U Erase line
+		case 0x15:
+			fmt.Print(get_n_string(esc["backspace"], len(cmd_str)))
+			cmd_str = ""
 
 		//^N Go forward through cmd history 
 		case 0x0e:
@@ -682,11 +697,17 @@ func read_stdin() {
 		case 0x3:
 			quit(make([]string, 0))
 
+		case 0x17:
+			last_space := max(strings.LastIndexByte(cmd_str, ' '), 0)
+			fmt.Print(get_n_string(esc["backspace"], len(cmd_str) - last_space))
+			cmd_str = cmd_str[:last_space]
+
 		//Otherwise, add c to cmd string 
 		default:
-			char := string(cmd_buf[0])
+			char := string(c)
 			//Print to stdout 
 			fmt.Print(char)
+			cursor_index++
 			cmd_str += char
 		}
 	}
@@ -729,15 +750,27 @@ func main() {
 	}
 	heading_string += "\r\n\r\n"
 
+	//Flags
+
 	flag.IntVar(&port, "p", 8081, "port number for proxy")
 	flag.StringVar(&editor, "e", "vim", "cli editor of choice")
 	flag.StringVar(&username, "U", "user", "auth: username")
 	flag.StringVar(&password, "P", "pass", "auth: password")
 	flag.StringVar(&cert_file, "pub", "gowebgo_cert.pem", "Public key (CA cert)")
 	flag.StringVar(&key_file, "priv", "gowebgo_key.pem", "Private key")
-	flag.BoolVar(&intercept, "i", false, "intercept requests")
+	flag.StringVar(&log_file, "log", "gowebgo.log", "Log file")
+	flag.BoolVar(&intercept, "i", false, "Intercept requests")
 	flag.Parse()
 
+	//Log file
+	f, err := os.OpenFile(log_file, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+	defer f.Close()
+	if err != nil {
+		log.Fatalf("Error opening log file.", err)
+	}
+	log.SetOutput(f)
+
+	//Terminal Raw Mode 
 	prev_state, err := term.MakeRaw(int(os.Stdin.Fd()))
 	if err != nil {
 		log.Fatalf(err.Error())
