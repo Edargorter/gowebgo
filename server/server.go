@@ -639,7 +639,7 @@ func request_cmd(c byte){
 		display()
 
 	//Backspace character
-	case 0x7f:
+	case 0x08, 0x7f:
 		if len(cmd_str) > 0 {
 			cmd_str = cmd_str[:len(cmd_str) - 1]
 			fmt.Print(esc["backspace"])
@@ -677,10 +677,6 @@ func request_cmd(c byte){
 	case 0x1b:
 		cmd_mode = true
 
-	//^C SIGINT -> quit
-	case 0x3:
-		quit(make([]string, 0))
-
 	case 0x17:
 		last_space := max(strings.LastIndexByte(cmd_str, ' '), 0)
 		fmt.Print(get_n_string(esc["backspace"], len(cmd_str) - last_space))
@@ -707,7 +703,10 @@ func read_stdin() {
 			return
 		}
 		c := cmd_buf[0]
-		if cmd_mode {
+		//^C SIGINT -> quit
+		if c == 0x3 {
+			quit(make([]string, 0))
+		} else if cmd_mode {
 			interface_cmd(c)
 		} else {
 			request_cmd(c)
