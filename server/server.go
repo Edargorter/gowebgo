@@ -698,7 +698,6 @@ func request_cmd(c byte){
 
 func read_stdin() {
 
-
 	for {
 		//Read one byte 
 		_, err := os.Stdin.Read(cmd_buf)
