@@ -69,6 +69,8 @@ var reqs = make(map[string] RStruct)
 var err_str = ""
 var win_width = 75
 var win_height = 200
+var hl_index = 0
+var start_index = 0
 
 //Colours. See https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html
 // Other escape sequences: https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
@@ -525,14 +527,22 @@ func display() {
 
 	cls()
 	var inter_str string
+	var cmd_mode_str string
+
 	if intercept {
-		inter_str = fmt.Sprintf("%sON", esc["red"])
+		inter_str = fmt.Sprintf("%sON", esc["green"])
 	} else {
-		inter_str = fmt.Sprintf("%sOFF", esc["green"])
+		inter_str = fmt.Sprintf("%sOFF", esc["red"])
+	}
+
+	if cmd_mode {
+		cmd_mode_str = fmt.Sprintf("%sON", esc["green"])
+	} else {
+		cmd_mode_str = fmt.Sprintf("%sOFF", esc["red"])
 	}
 
 	//Indicate status 
-	fmt.Printf("%s %s -Gowebgo-  Port: %d | Editor: %s | Intercept: %s %s\r\n\r\n", esc["bg_white"], esc["black"], port, editor, inter_str, esc["reset"])
+	fmt.Printf("%s %s -Gowebgo-  Port: %d | Editor: %s | Intercept: %s%s | CMD Mode: %s%s | %s\r\n\r\n", esc["bg_white"], esc["black"], port, editor, inter_str, esc["black"], cmd_mode_str, esc["black"], esc["reset"])
 
 	var disp int = last_req_v
 
@@ -567,11 +577,7 @@ func display() {
 	var req_id int
 	var req_name string
 
-	for i := 0; i < req_v_dist; i++ {
-		if i == 0 {
-			fmt.Print(esc["bg_yellow"])
-			fmt.Print(esc["black"])
-		}
+	for i := start_index; i < req_v_dist; i++ {
 
 		req_id = req_num - i - 1
 		req_name = req_names[req_id]
@@ -586,10 +592,15 @@ func display() {
 			disp_str += info_arr[i][:min_len] + wsp[:spacing[i] - min_len]
 		}
 
+		if req_id == hl_index {
+			fmt.Print(esc["bg_yellow"])
+			fmt.Print(esc["black"])
+		}
+
 		disp_str += "\r\n"
 		fmt.Print(disp_str)
 
-		if i == 0 {
+		if req_id == hl_index {
 			fmt.Print(esc["reset"])
 		}
 	}
@@ -617,9 +628,19 @@ func interface_cmd(c byte){
 	//Disable cmd mode
 	case 'i':
 		cmd_mode = false
+		err_str = ""
+		display()
+
+	case 'j':
+		hl_index = (hl_index - 1 + len(req_names)) % len(req_names)
+		display()
+
+	case 'k':
+		hl_index = (hl_index + 1) % len(req_names)
+		display()
 
 	default:
-		err_str = "Cmd mode on"
+		err_str = "Cmd mode on (press 'i' to enter text)"
 		display()
 	}
 }
@@ -639,7 +660,7 @@ func request_cmd(c byte){
 		display()
 
 	//Backspace character
-	case 0x7f:
+	case 0x08, 0x7f:
 		if len(cmd_str) > 0 {
 			cmd_str = cmd_str[:len(cmd_str) - 1]
 			fmt.Print(esc["backspace"])
@@ -676,10 +697,8 @@ func request_cmd(c byte){
 	//Enable command mode 
 	case 0x1b:
 		cmd_mode = true
-
-	//^C SIGINT -> quit
-	case 0x3:
-		quit(make([]string, 0))
+		err_str = ""
+		display()
 
 	case 0x17:
 		last_space := max(strings.LastIndexByte(cmd_str, ' '), 0)
@@ -706,7 +725,10 @@ func read_stdin() {
 			return
 		}
 		c := cmd_buf[0]
-		if cmd_mode {
+		//^C SIGINT -> quit
+		if c == 0x3 {
+			quit(make([]string, 0))
+		} else if cmd_mode {
 			interface_cmd(c)
 		} else {
 			request_cmd(c)
