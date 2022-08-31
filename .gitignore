@@ -19,6 +19,7 @@ gowebgo
 # vendor/
 
 # Requests
+*.log
 server/requests/*
 server/*.log
 !server/requests/.gitkeep
