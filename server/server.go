@@ -554,10 +554,15 @@ func display() {
 	fmt.Printf("%s %s -Gowebgo-  Port: %d | Editor: %s | Intercept: %s%s | CMD Mode: %s%s | Freeze: %s%s | Requests: %d | %s\r\n\r\n", esc["bg_white"], esc["black"], port, editor, inter_str, esc["black"], cmd_mode_str, esc["black"], freeze_str, esc["black"], len(req_names), esc["reset"])
 
 	var disp int = last_req_v
+	if !freeze {
+		start_index = req_num - 1
+	}
+
+	disp_req := start_index - hl_index
 
 	// Print latest request 
 	if req_num > 0 {
-		req_lines := read_request_file(reqs[req_names[req_num-1]])
+		req_lines := read_request_file(reqs[req_names[disp_req]])
 		for _, line := range req_lines {
 			if len(line) > 0 && (line[len(line)-1] == 0x0D || line[len(line)-1] == 0x0A) {
 				log.Fatalf("return/newline feed detected")
@@ -596,10 +601,6 @@ func display() {
 	7 hl
 	8
 	*/
-
-	if !freeze {
-		start_index = req_num - 1
-	}
 
 	for i := 0; i < req_v_dist; i++ {
 
