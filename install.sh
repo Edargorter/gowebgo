@@ -20,7 +20,7 @@ echo ""
 if [ "$(uname)" == 'Linux' ] && ! [ -x "$(command -v go)" ]; then
 	if [ $(which apt) ]; then
 		echo "$pre Installing system requirements..."
-		sudo apt install golang-go
+		sudo apt install golang-go -y
 	fi
 elif [[ "$OSTYPE" == "darwin"* ]]; then
 	if [ ! $(which brew) ]; then
