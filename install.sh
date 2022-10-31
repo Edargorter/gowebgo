@@ -11,6 +11,8 @@ echo -en "
 | | (___)/ _ \| ||_|| |/ _  ) || \| | (___)/ _ \ 
 | \____/| |_| | |___| ( (/ /| |_) ) \____/| |_| |
  \_____/ \___/ \______|\____)____/ \_____/ \___/ 
+
+ by Zachary Bowditch (Edargorter)
  "
 echo ""
 
@@ -19,7 +21,7 @@ if { [ "$(uname)" == 'Linux' ] && ! [ -x "$(command -v go)" ]; }; then
 	echo "Linux"
 	if [ $(which apt) ]; then
 		echo "$pre Installing system requirements..."
-		sudo apt install golang-go
+		sudo apt install golang-go -y
 	fi
 elif [[ "$OSTYPE" == "darwin"* ]]; then
 	if [ ! $(which brew) ]; then

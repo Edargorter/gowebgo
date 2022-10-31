@@ -48,6 +48,7 @@ var v_offset = 17
 var last_req_v = 17
 var cmd_mode = true
 var cmd_index = 0
+var freeze = false
 var cursor_index = 0
 
 var username string
@@ -71,6 +72,8 @@ var win_width = 75
 var win_height = 200
 var hl_index = 0
 var start_index = 0
+var req_v_dist = 0
+
 
 //Colours. See https://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html
 // Other escape sequences: https://gist.github.com/fnky/458719343aabd01cfb17a3a4f7296797
@@ -523,11 +526,11 @@ func display() {
 	}
 
 	req_num := len(req_names) + win_height - win_height
-	req_v_dist := 0
 
 	cls()
 	var inter_str string
 	var cmd_mode_str string
+	var freeze_str string
 
 	if intercept {
 		inter_str = fmt.Sprintf("%sON", esc["green"])
@@ -541,14 +544,25 @@ func display() {
 		cmd_mode_str = fmt.Sprintf("%sOFF", esc["red"])
 	}
 
+	if freeze {
+		freeze_str = fmt.Sprintf("%sON", esc["green"])
+	} else {
+		freeze_str = fmt.Sprintf("%sOFF", esc["red"])
+	}
+
 	//Indicate status 
-	fmt.Printf("%s %s -Gowebgo-  Port: %d | Editor: %s | Intercept: %s%s | CMD Mode: %s%s | %s\r\n\r\n", esc["bg_white"], esc["black"], port, editor, inter_str, esc["black"], cmd_mode_str, esc["black"], esc["reset"])
+	fmt.Printf("%s %s -Gowebgo-  Port: %d | Editor: %s | Intercept: %s%s | CMD Mode: %s%s | Freeze: %s%s | Requests: %d | %s\r\n\r\n", esc["bg_white"], esc["black"], port, editor, inter_str, esc["black"], cmd_mode_str, esc["black"], freeze_str, esc["black"], len(req_names), esc["reset"])
 
 	var disp int = last_req_v
+	if !freeze {
+		start_index = req_num - 1
+	}
+
+	disp_req := start_index - hl_index
 
 	// Print latest request 
 	if req_num > 0 {
-		req_lines := read_request_file(reqs[req_names[req_num-1]])
+		req_lines := read_request_file(reqs[req_names[disp_req]])
 		for _, line := range req_lines {
 			if len(line) > 0 && (line[len(line)-1] == 0x0D || line[len(line)-1] == 0x0A) {
 				log.Fatalf("return/newline feed detected")
@@ -577,9 +591,20 @@ func display() {
 	var req_id int
 	var req_name string
 
-	for i := start_index; i < req_v_dist; i++ {
+	/*
+	1 ---
+	2
+	3
+	4
+	5 ---
+	6
+	7 hl
+	8
+	*/
 
-		req_id = req_num - i - 1
+	for i := 0; i < req_v_dist; i++ {
+
+		req_id = start_index - i
 		req_name = req_names[req_id]
 		r := reqs[req_name]
 
@@ -587,12 +612,12 @@ func display() {
 		disp_str := ""
 
 		//Construct request record 
-		for i := 0; i < len(headings); i++ {
-			min_len := min(len(info_arr[i]), spacing[i] - 1)
-			disp_str += info_arr[i][:min_len] + wsp[:spacing[i] - min_len]
+		for j := 0; j < len(headings); j++ {
+			min_len := min(len(info_arr[j]), spacing[j] - 1)
+			disp_str += info_arr[j][:min_len] + wsp[:spacing[j] - min_len]
 		}
 
-		if req_id == hl_index {
+		if i == hl_index {
 			fmt.Print(esc["bg_yellow"])
 			fmt.Print(esc["black"])
 		}
@@ -600,7 +625,7 @@ func display() {
 		disp_str += "\r\n"
 		fmt.Print(disp_str)
 
-		if req_id == hl_index {
+		if i == hl_index {
 			fmt.Print(esc["reset"])
 		}
 	}
@@ -631,13 +656,25 @@ func interface_cmd(c byte){
 		err_str = ""
 		display()
 
-	case 'j':
-		hl_index = (hl_index - 1 + len(req_names)) % len(req_names)
+	case 'k':
+		if freeze {
+			start_index = (start_index - 1 + len(req_names)) % len(req_names)
+		} else {
+			hl_index = (hl_index - 1 + req_v_dist) % req_v_dist
+		}
 		display()
 
-	case 'k':
-		hl_index = (hl_index + 1) % len(req_names)
+	case 'j':
+		if freeze {
+			start_index = (start_index + 1) % len(req_names)
+		} else {
+			hl_index = (hl_index + 1) % req_v_dist
+		}
 		display()
+
+	//Freeze mode 
+	case 'f':
+		freeze = !freeze
 
 	default:
 		err_str = "Cmd mode on (press 'i' to enter text)"
@@ -694,7 +731,7 @@ func request_cmd(c byte){
 		fmt.Print(get_n_string(esc["backspace"], len(cmd_str)))
 		cmd_str = ""
 
-	//Enable command mode 
+	//Enable command mode (ESC)
 	case 0x1b:
 		cmd_mode = true
 		err_str = ""
